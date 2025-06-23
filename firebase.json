@@ -1,0 +1,46 @@
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "venv",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "runtime": "python311"
+    }
+  ],
+  "hosting": {
+    "site": "explochatprd",
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*", 
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/chat",
+        "function": "chat_simple"
+      },
+      {
+        "source": "/export",
+        "function": "export_simple"
+      },
+      {
+        "source": "/optimize",
+        "function": "optimize_conversation"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}

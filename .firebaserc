@@ -1,0 +1,22 @@
+{
+  "projects": {
+    "default": "explo-website-tools"
+  },
+  "hosting": [
+    {
+      "site": "explochatprd",
+      "public": "public", 
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ]
+}

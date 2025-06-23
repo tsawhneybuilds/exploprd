@@ -1,0 +1,145 @@
+{
+  "status": "success",
+  "result": [
+    {
+      "platform": "gcfv1",
+      "id": "buildFreeChart",
+      "project": "explo-website-tools",
+      "region": "us-central1",
+      "httpsTrigger": {},
+      "entryPoint": "buildFreeChart",
+      "runtime": "nodejs18",
+      "uri": "https://us-central1-explo-website-tools.cloudfunctions.net/buildFreeChart",
+      "securityLevel": "SECURE_ALWAYS",
+      "ingressSettings": "ALLOW_ALL",
+      "labels": {
+        "deployment-tool": "cli-firebase",
+        "firebase-functions-hash": "80133feafef5bf88e636484127859ca8795521b1"
+      },
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"explo-website-tools\",\"storageBucket\":\"explo-website-tools.appspot.com\"}",
+        "GCLOUD_PROJECT": "explo-website-tools",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/explo-website-tools/locations/us-central1/functions/buildFreeChart"
+      },
+      "sourceUploadUrl": "https://storage.googleapis.com/uploads-913643147509.us-central1.cloudfunctions.appspot.com/b5581e1c-243c-4c76-aa1e-76b1ee1b26d2.zip",
+      "serviceAccount": "explo-website-tools@appspot.gserviceaccount.com",
+      "availableMemoryMb": 256,
+      "timeoutSeconds": 60,
+      "codebase": "default",
+      "hash": "80133feafef5bf88e636484127859ca8795521b1",
+      "state": "ACTIVE"
+    },
+    {
+      "platform": "gcfv1",
+      "id": "dateSQLquery",
+      "project": "explo-website-tools",
+      "region": "us-central1",
+      "httpsTrigger": {},
+      "entryPoint": "dateSQLquery",
+      "runtime": "nodejs18",
+      "uri": "https://us-central1-explo-website-tools.cloudfunctions.net/dateSQLquery",
+      "securityLevel": "SECURE_ALWAYS",
+      "ingressSettings": "ALLOW_ALL",
+      "labels": {
+        "deployment-tool": "cli-firebase",
+        "firebase-functions-hash": "80133feafef5bf88e636484127859ca8795521b1"
+      },
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"explo-website-tools\",\"storageBucket\":\"explo-website-tools.appspot.com\"}",
+        "GCLOUD_PROJECT": "explo-website-tools",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/explo-website-tools/locations/us-central1/functions/dateSQLquery"
+      },
+      "sourceUploadUrl": "https://storage.googleapis.com/uploads-913643147509.us-central1.cloudfunctions.appspot.com/b5581e1c-243c-4c76-aa1e-76b1ee1b26d2.zip",
+      "serviceAccount": "explo-website-tools@appspot.gserviceaccount.com",
+      "availableMemoryMb": 256,
+      "timeoutSeconds": 60,
+      "codebase": "default",
+      "hash": "80133feafef5bf88e636484127859ca8795521b1",
+      "state": "ACTIVE"
+    },
+    {
+      "platform": "gcfv1",
+      "id": "explainSQLQuery",
+      "project": "explo-website-tools",
+      "region": "us-central1",
+      "httpsTrigger": {},
+      "entryPoint": "explainSQLQuery",
+      "runtime": "nodejs18",
+      "uri": "https://us-central1-explo-website-tools.cloudfunctions.net/explainSQLQuery",
+      "securityLevel": "SECURE_ALWAYS",
+      "ingressSettings": "ALLOW_ALL",
+      "labels": {
+        "firebase-functions-hash": "80133feafef5bf88e636484127859ca8795521b1",
+        "deployment-tool": "cli-firebase"
+      },
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"explo-website-tools\",\"storageBucket\":\"explo-website-tools.appspot.com\"}",
+        "GCLOUD_PROJECT": "explo-website-tools",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/explo-website-tools/locations/us-central1/functions/explainSQLQuery"
+      },
+      "sourceUploadUrl": "https://storage.googleapis.com/uploads-913643147509.us-central1.cloudfunctions.appspot.com/b5581e1c-243c-4c76-aa1e-76b1ee1b26d2.zip",
+      "serviceAccount": "explo-website-tools@appspot.gserviceaccount.com",
+      "availableMemoryMb": 256,
+      "timeoutSeconds": 60,
+      "codebase": "default",
+      "hash": "80133feafef5bf88e636484127859ca8795521b1",
+      "state": "ACTIVE"
+    },
+    {
+      "platform": "gcfv1",
+      "id": "generateData",
+      "project": "explo-website-tools",
+      "region": "us-central1",
+      "httpsTrigger": {},
+      "entryPoint": "generateData",
+      "runtime": "nodejs18",
+      "uri": "https://us-central1-explo-website-tools.cloudfunctions.net/generateData",
+      "securityLevel": "SECURE_ALWAYS",
+      "ingressSettings": "ALLOW_ALL",
+      "labels": {
+        "deployment-tool": "cli-firebase",
+        "firebase-functions-hash": "80133feafef5bf88e636484127859ca8795521b1"
+      },
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"explo-website-tools\",\"storageBucket\":\"explo-website-tools.appspot.com\"}",
+        "GCLOUD_PROJECT": "explo-website-tools",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/explo-website-tools/locations/us-central1/functions/generateData"
+      },
+      "sourceUploadUrl": "https://storage.googleapis.com/uploads-913643147509.us-central1.cloudfunctions.appspot.com/b5581e1c-243c-4c76-aa1e-76b1ee1b26d2.zip",
+      "serviceAccount": "explo-website-tools@appspot.gserviceaccount.com",
+      "availableMemoryMb": 256,
+      "timeoutSeconds": 60,
+      "codebase": "default",
+      "hash": "80133feafef5bf88e636484127859ca8795521b1",
+      "state": "ACTIVE"
+    },
+    {
+      "platform": "gcfv1",
+      "id": "optimizeSQLQuery",
+      "project": "explo-website-tools",
+      "region": "us-central1",
+      "httpsTrigger": {},
+      "entryPoint": "optimizeSQLQuery",
+      "runtime": "nodejs18",
+      "uri": "https://us-central1-explo-website-tools.cloudfunctions.net/optimizeSQLQuery",
+      "securityLevel": "SECURE_ALWAYS",
+      "ingressSettings": "ALLOW_ALL",
+      "labels": {
+        "deployment-tool": "cli-firebase",
+        "firebase-functions-hash": "80133feafef5bf88e636484127859ca8795521b1"
+      },
+      "environmentVariables": {
+        "FIREBASE_CONFIG": "{\"projectId\":\"explo-website-tools\",\"storageBucket\":\"explo-website-tools.appspot.com\"}",
+        "GCLOUD_PROJECT": "explo-website-tools",
+        "EVENTARC_CLOUD_EVENT_SOURCE": "projects/explo-website-tools/locations/us-central1/functions/optimizeSQLQuery"
+      },
+      "sourceUploadUrl": "https://storage.googleapis.com/uploads-913643147509.us-central1.cloudfunctions.appspot.com/b5581e1c-243c-4c76-aa1e-76b1ee1b26d2.zip",
+      "serviceAccount": "explo-website-tools@appspot.gserviceaccount.com",
+      "availableMemoryMb": 256,
+      "timeoutSeconds": 60,
+      "codebase": "default",
+      "hash": "80133feafef5bf88e636484127859ca8795521b1",
+      "state": "ACTIVE"
+    }
+  ]
+}

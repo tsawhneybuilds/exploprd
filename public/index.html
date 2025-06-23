@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat-PRD | Explo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: #F5F5F5; /* Light Grey from Explo.co */
+            color: #333333; /* Dark text color */
+        }
+        /* Custom Tailwind colors matching Explo.co */
+        .bg-explo-blue { background-color: #0000FF; } /* Explo Blue */
+        .bg-explo-darkblue { background-color: #000080; } /* Dark Blue/Navy */
+        .text-explo-blue { color: #0000FF; }
+        .border-explo-blue { border-color: #0000FF; }
+        .ring-explo-blue { --tw-ring-color: #0000FF; }
+        /* Simple spinner for loading states */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #0000FF; /* Explo Blue */
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-white shadow-md p-4">
+        <nav class="container mx-auto flex justify-between items-center">
+            <div class="text-2xl font-bold text-explo-blue">
+                <a href="https://www.explo.co/" class="hover:underline">Explo.co</a>
+            </div>
+            <div class="space-x-4">
+                <a href="#" class="text-gray-700 hover:text-explo-blue font-medium">Chat-PRD</a>
+                <span id="userIdDisplay" class="ml-4 text-xs text-gray-500">Simplified Version</span>
+            </div>
+        </nav>
+    </header>
+    <main class="flex-grow container mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
+        <!-- PRD Assistant Sidebar -->
+        <div class="lg:w-1/3 bg-white p-6 rounded-lg shadow-md flex flex-col space-y-4">
+            <h2 class="text-xl font-bold">PRD Assistant</h2>
+            <p class="text-gray-600">Chat with AI to build your Product Requirements Document. Conversation is saved locally in your browser.</p>
+            
+            <div id="status" class="text-sm text-gray-600">Ready to chat!</div>
+            
+            <h3 class="text-lg font-bold mt-4">Quick Start Tips</h3>
+            <ul class="space-y-2 text-gray-700 text-sm">
+                <li class="text-gray-600">• Describe your product idea</li>
+                <li class="text-gray-600">• Define your target users</li>
+                <li class="text-gray-600">• Outline key features</li>
+                <li class="text-gray-600">• Discuss technical requirements</li>
+                <li class="text-gray-600">• Ask for PRD structure guidance</li>
+            </ul>
+            
+            <div class="bg-blue-50 p-4 rounded-lg mt-4">
+                <h4 class="font-semibold text-blue-800">Example Prompts:</h4>
+                <ul class="text-sm text-blue-700 mt-2 space-y-1">
+                    <li>"Help me structure a PRD for a mobile app"</li>
+                    <li>"What user stories should I include?"</li>
+                    <li>"Define technical requirements for my product"</li>
+                </ul>
+            </div>
+
+            <button id="clearChatBtn" class="px-4 py-2 bg-gray-500 text-white font-semibold rounded-full shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75">
+                Clear Conversation
+            </button>
+            
+            <button id="exportPrdBtn" class="mt-auto px-4 py-2 bg-green-500 text-white font-semibold rounded-full shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 disabled:opacity-50">
+                Export Generated PRD
+                <span id="exportSpinner" class="spinner hidden"></span>
+            </button>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="lg:w-2/3 bg-white p-6 rounded-lg shadow-md flex flex-col">
+            <h2 class="text-xl font-bold mb-4">Chat with your PRD Assistant</h2>
+            <div id="chatWindow" class="flex-grow overflow-y-auto border border-gray-200 rounded-lg p-4 mb-4 space-y-4 bg-gray-50 min-h-[400px]">
+                <!-- Messages will be added here dynamically -->
+            </div>
+            <div class="flex items-center space-x-3">
+                <input type="text" id="chatInput" placeholder="Ask a question or describe your product idea..." class="flex-grow p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-explo-blue">
+                <button id="sendChatBtn" class="px-5 py-3 bg-explo-blue text-white font-semibold rounded-full shadow-md hover:bg-explo-darkblue focus:outline-none focus:ring-2 focus:ring-explo-blue focus:ring-opacity-75">
+                    Send
+                    <span id="chatSpinner" class="spinner hidden"></span>
+                </button>
+            </div>
+            <div id="chatStatus" class="text-sm text-gray-600 mt-2"></div>
+        </div>
+    </main>
+    <footer class="bg-explo-darkblue text-white p-4 text-center mt-8">
+        <p>© 2025 Explo. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Simplified conversation management using localStorage
+        let conversation = [
+            {
+                role: 'system', 
+                content: 'You are an expert Product Manager AI assistant designed to help users build Product Requirements Documents (PRDs). Your primary goal is to help users think through their product ideas and guide them through creating comprehensive PRDs. Guidelines: Ask clarifying questions to help users define their product vision. Guide them through key PRD sections: Goals, User Stories, Features, Technical Requirements, etc. Provide structured, actionable advice. Help them think about scope, timeline, and priorities. Maintain a professional, clear, and action-oriented tone.'
+            }
+        ];
+        
+        // Token optimization system
+        let totalTokens = 0;
+        const TOKEN_LIMIT = 3000; // Optimize every 3000 tokens
+        let isOptimizing = false;
+        
+        // Token estimation function (rough approximation)
+        function estimateTokens(text) {
+            // GPT-3.5/4 uses ~4 chars per token on average
+            return Math.ceil(text.length / 4);
+        }
+        
+        // Add tokens to counter
+        function addTokens(inputTokens, outputTokens = 0) {
+            totalTokens += inputTokens + outputTokens;
+            console.log(`Token usage: +${inputTokens + outputTokens} tokens (Total: ${totalTokens}/${TOKEN_LIMIT})`);
+        }
+
+        // UI Elements
+        const chatWindow = document.getElementById('chatWindow');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+        const exportPrdBtn = document.getElementById('exportPrdBtn');
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        const chatStatus = document.getElementById('chatStatus');
+        const status = document.getElementById('status');
+        const chatSpinner = document.getElementById('chatSpinner');
+        const exportSpinner = document.getElementById('exportSpinner');
+
+        // Load conversation from localStorage on page load
+        function loadConversation() {
+            const saved = localStorage.getItem('prd_conversation');
+            if (saved) {
+                try {
+                    conversation = JSON.parse(saved);
+                    renderConversation();
+                    showStatus(status, 'Conversation loaded from browser storage', 'success');
+                } catch (e) {
+                    console.error('Failed to load conversation:', e);
+                    showStatus(status, 'Failed to load saved conversation', 'error');
+                }
+            } else {
+                // Add initial AI message
+                addMessage('assistant', "Hello! I'm your PRD Assistant. Tell me about your product idea and I'll help you build a comprehensive Product Requirements Document. What would you like to create?");
+            }
+        }
+
+        // Save conversation to localStorage
+        function saveConversation() {
+            try {
+                localStorage.setItem('prd_conversation', JSON.stringify(conversation));
+            } catch (e) {
+                console.error('Failed to save conversation:', e);
+                showStatus(status, 'Warning: Could not save conversation to browser storage', 'error');
+            }
+        }
+
+        // Add message to conversation
+        function addMessage(role, content) {
+            conversation.push({ role, content });
+            saveConversation();
+            if (role !== 'system') {
+                displayMessage(content, role === 'user');
+            }
+        }
+
+        // Display message in UI
+        function displayMessage(text, isUser) {
+            const messageContainer = document.createElement('div');
+            messageContainer.className = `flex items-start ${isUser ? 'justify-end' : ''}`;
+
+            // Basic Markdown to HTML conversion for AI responses
+            let formattedText = text;
+            if (!isUser) {
+                formattedText = formattedText
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
+                    .replace(/^- (.*)/gm, '<li>$1</li>') // List items
+                    .replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>'); // Inline code
+                if (formattedText.includes('<li>')) {
+                    formattedText = `<ul class="list-disc list-inside">${formattedText}</ul>`;
+                }
+            }
+
+            if (!isUser) {
+                const avatar = document.createElement('div');
+                avatar.className = 'flex-shrink-0 w-8 h-8 rounded-full bg-explo-blue flex items-center justify-center text-white text-sm font-bold mr-3';
+                avatar.textContent = 'AI';
+                messageContainer.appendChild(avatar);
+            }
+
+            const messageBubble = document.createElement('div');
+            messageBubble.className = `p-3 rounded-xl max-w-[80%] ${isUser ? 'bg-explo-blue text-white ml-auto' : 'bg-gray-200 text-gray-800'}`;
+            messageBubble.innerHTML = `<p class="text-sm">${formattedText}</p>`;
+            
+            if (isUser) {
+                const userAvatar = document.createElement('div');
+                userAvatar.className = 'flex-shrink-0 w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-sm font-bold ml-3';
+                userAvatar.textContent = 'U';
+                messageContainer.appendChild(messageBubble);
+                messageContainer.appendChild(userAvatar);
+            } else {
+                messageContainer.appendChild(messageBubble);
+            }
+
+            chatWindow.appendChild(messageContainer);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        // Render entire conversation
+        function renderConversation() {
+            chatWindow.innerHTML = '';
+            conversation.forEach(msg => {
+                if (msg.role !== 'system') {
+                    displayMessage(msg.content, msg.role === 'user');
+                }
+            });
+        }
+
+        // Show status message
+        function showStatus(element, message, type, showSpinner = false) {
+            const statusClasses = {
+                'success': 'text-green-600',
+                'error': 'text-red-600',
+                'info': 'text-blue-600'
+            };
+            element.className = `text-sm ${statusClasses[type] || 'text-gray-600'}`;
+            element.innerHTML = showSpinner ? `${message}<span class="spinner"></span>` : message;
+        }
+
+        // Send message to AI
+        async function sendMessage(messageText) {
+            if (!messageText.trim()) return;
+
+            // Add user message
+            addMessage('user', messageText);
+            chatInput.value = '';
+            
+            // Increment message counter for optimization
+            addTokens(estimateTokens(messageText));
+            
+            // Check if optimization is needed
+            if (totalTokens > TOKEN_LIMIT && !isOptimizing) {
+                showStatus(chatStatus, 'Optimizing conversation for better performance...', 'info');
+                await optimizeConversation();
+            }
+            
+            // Show loading state
+            sendChatBtn.disabled = true;
+            chatSpinner.classList.remove('hidden');
+            showStatus(chatStatus, 'Thinking...', 'info', true);
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversation })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.response) {
+                    // Track actual token usage from API response
+                    if (result.tokenUsage) {
+                        addTokens(result.tokenUsage.promptTokens || 0, result.tokenUsage.completionTokens || 0);
+                    } else {
+                        // Fallback estimation if token data not available
+                        addTokens(0, estimateTokens(result.response));
+                    }
+                    
+                    addMessage('assistant', result.response);
+                    saveConversation();
+                    showStatus(chatStatus, '✓ Response received', 'success');
+                } else {
+                    throw new Error(result.error || 'Chat request failed');
+                }
+
+            } catch (error) {
+                console.error('Chat error:', error);
+                showStatus(chatStatus, `Error: ${error.message}`, 'error');
+                displayMessage("Sorry, I encountered an error. Please try again.", false);
+            } finally {
+                sendChatBtn.disabled = false;
+                chatSpinner.classList.add('hidden');
+            }
+        }
+
+        // Token optimization function
+        async function optimizeConversation() {
+            if (isOptimizing) return;
+            
+            isOptimizing = true;
+            try {
+                showStatus(chatStatus, 'Analyzing conversation and extracting PRD information...', 'info');
+                
+                const response = await fetch('/optimize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        conversation: conversation,
+                        totalTokens: totalTokens 
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.optimizedConversation) {
+                    // Replace conversation with optimized version
+                    conversation = result.optimizedConversation;
+                    saveConversation();
+                    
+                    // Reset token counter after optimization
+                    totalTokens = 0;
+                    
+                    // Show optimization results
+                    showStatus(chatStatus, `✓ Optimized: Reduced from ${result.originalTokens} to ${result.optimizedTokens} tokens`, 'success');
+                    
+                    // Add a system message to show optimization occurred
+                    displayMessage(`🔧 **Conversation Optimized**\n\nI've analyzed our conversation and extracted key PRD information. Token usage reduced by ${Math.round(((result.originalTokens - result.optimizedTokens) / result.originalTokens) * 100)}%! This helps me maintain context while reducing processing time. We can continue our discussion!`, false);
+                    
+                } else {
+                    throw new Error(result.error || 'Optimization failed');
+                }
+
+            } catch (error) {
+                console.error('Optimization error:', error);
+                showStatus(chatStatus, `Optimization warning: ${error.message}`, 'error');
+            } finally {
+                isOptimizing = false;
+            }
+        }
+
+        // Export PRD
+        async function exportPRD() {
+            if (conversation.length <= 1) {
+                showStatus(status, 'Please have a conversation first before exporting', 'error');
+                return;
+            }
+
+            exportPrdBtn.disabled = true;
+            exportSpinner.classList.remove('hidden');
+            sendChatBtn.disabled = true;
+            showStatus(status, 'Generating PRD...', 'info', true);
+
+            try {
+                const response = await fetch('/export', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversation })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.downloadURL) {
+                    showStatus(status, 'PRD ready for download!', 'success');
+                    
+                    // Trigger download
+                    const a = document.createElement('a');
+                    a.href = result.downloadURL;
+                    a.download = `Explo_PRD_${new Date().toISOString().slice(0, 10)}.docx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    throw new Error(result.error || 'Failed to generate PRD');
+                }
+
+            } catch (error) {
+                console.error('Export error:', error);
+                showStatus(status, `Export error: ${error.message}`, 'error');
+            } finally {
+                exportPrdBtn.disabled = false;
+                exportSpinner.classList.add('hidden');
+                sendChatBtn.disabled = false;
+            }
+        }
+
+        // Clear conversation
+        function clearConversation() {
+            if (confirm('Are you sure you want to clear the entire conversation? This cannot be undone.')) {
+                conversation = [conversation[0]]; // Keep only system message
+                saveConversation();
+                chatWindow.innerHTML = '';
+                addMessage('assistant', "Hello! I'm your PRD Assistant. Tell me about your product idea and I'll help you build a comprehensive Product Requirements Document. What would you like to create?");
+                showStatus(status, 'Conversation cleared', 'success');
+            }
+        }
+
+        // Event Listeners
+        chatInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage(chatInput.value);
+            }
+        });
+
+        sendChatBtn.addEventListener('click', () => {
+            sendMessage(chatInput.value);
+        });
+
+        exportPrdBtn.addEventListener('click', exportPRD);
+        clearChatBtn.addEventListener('click', clearConversation);
+
+        // Initialize app
+        window.onload = () => {
+            loadConversation();
+            showStatus(status, 'Ready to chat! (Simplified version)', 'success');
+        };
+    </script>
+</html>
