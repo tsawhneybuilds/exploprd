@@ -12,33 +12,77 @@ import firebase_functions
 from google.auth import impersonated_credentials
 from google.auth.transport.requests import Request
 import google.auth
+import re
 
-# Get OpenAI API key from Firebase config (correct way for Firebase Functions)
-try:
-    # For newer Firebase Functions, config is accessed differently
-    # First try environment variables (which Firebase sets automatically from config)
-    OPENAI_API_KEY = os.environ.get('FUNCTIONS_CONFIG_openai_key') or os.environ.get('OPENAI_KEY')
-    
-    if not OPENAI_API_KEY:
-        # Try accessing Firebase config directly if available
-        try:
-            # Try Firebase config
-            config = firebase_functions.config()
-            OPENAI_API_KEY = config.get('openai', {}).get('key')
-        except:
-            OPENAI_API_KEY = None
-    
-    print(f"OpenAI API Key status: {'✓ Loaded' if OPENAI_API_KEY else '✗ Missing'}")
-    if OPENAI_API_KEY:
-        print(f"API Key length: {len(OPENAI_API_KEY)} characters")
-        print(f"API Key starts with: {OPENAI_API_KEY[:10]}...")
-        
-except Exception as e:
-    print(f"Error loading OpenAI API key: {e}")
-    OPENAI_API_KEY = None
-
+# Define project constants first
 PROJECT_ID = 'explo-website-tools'
 SERVICE_ACCOUNT_EMAIL = '142797649545-compute@developer.gserviceaccount.com'
+
+# Get OpenAI API key from Secret Manager
+def get_openai_api_key():
+    """Load OpenAI API key from various sources"""
+    try:
+        # First try environment variables (Firebase auto-creates these from config)
+        api_key = (os.environ.get('FUNCTIONS_CONFIG_openai_key') or 
+                  os.environ.get('OPENAI_KEY') or 
+                  os.environ.get('FUNCTIONS_CONFIG_OPENAI_KEY'))
+        
+        if api_key:
+            print(f"[ADMIN-LOG] ✓ API key loaded from environment variables")
+            return api_key
+        
+        # Try Secret Manager
+        try:
+            from google.cloud import secretmanager
+            
+            # Initialize Secret Manager client
+            secret_client = secretmanager.SecretManagerServiceClient()
+            
+            # Access the secret
+            secret_name = f"projects/{PROJECT_ID}/secrets/openai-api-key/versions/latest"
+            response = secret_client.access_secret_version(request={"name": secret_name})
+            api_key = response.payload.data.decode("UTF-8")
+            
+            print(f"[ADMIN-LOG] ✓ API key loaded from Secret Manager")
+            return api_key
+            
+        except Exception as secret_error:
+            print(f"[ADMIN-LOG] Secret Manager failed: {str(secret_error)}")
+        
+        # Try Firebase Functions config (the working method from before)
+        try:
+            import firebase_functions
+            config = firebase_functions.config()
+            api_key = config.get('openai', {}).get('key')
+            if api_key:
+                print(f"[ADMIN-LOG] ✓ API key loaded from Firebase config")
+                return api_key
+        except Exception as config_error:
+            print(f"[ADMIN-LOG] Firebase config failed: {str(config_error)}")
+        
+        # Fallback: try environment variable for Firebase config (legacy)
+        try:
+            api_key = os.environ.get('OPENAI_API_KEY')
+            if api_key:
+                print(f"[ADMIN-LOG] ✓ API key loaded from OPENAI_API_KEY env var")
+                return api_key
+        except Exception as env_error:
+            print(f"[ADMIN-LOG] Environment variable fallback failed: {str(env_error)}")
+        
+        print(f"[ADMIN-LOG] ✗ No API key found in any source")
+        return None
+        
+    except Exception as e:
+        print(f"[ADMIN-LOG] Error loading OpenAI API key: {e}")
+        return None
+
+# Load the API key
+OPENAI_API_KEY = get_openai_api_key()
+
+print(f"OpenAI API Key status: {'✓ Loaded' if OPENAI_API_KEY else '✗ Missing'}")
+if OPENAI_API_KEY:
+    print(f"API Key length: {len(OPENAI_API_KEY)} characters")
+    print(f"API Key starts with: {OPENAI_API_KEY[:10]}...")
 
 def generate_secure_signed_url(bucket_name: str, blob_name: str, expiration_hours: int = 2) -> str:
     """
@@ -142,7 +186,7 @@ def chat_simple(req: https_fn.Request) -> https_fn.Response:
                     'Authorization': f'Bearer {OPENAI_API_KEY}'
                 },
                 json={
-                    'model': 'gpt-4.1',
+                    'model': 'gpt-4.1-mini',
                     'messages': openai_messages,
                     'max_tokens': 2048,
                     'temperature': 0.7
@@ -255,30 +299,23 @@ def export_simple(req: https_fn.Request) -> https_fn.Response:
         # Create enhanced PRD generation prompt using all accumulated data + recent context
         if accumulated_prd or accumulated_summary:
             context_parts = []
-            
             if accumulated_prd:
                 context_parts.append(f"ACCUMULATED PRD SECTIONS:\n{json.dumps(accumulated_prd, indent=2)}")
-            
             if accumulated_summary:
                 context_parts.append(f"CONVERSATION HISTORY SUMMARY:\n{accumulated_summary}")
-            
             if recent_conversation_text.strip():
                 context_parts.append(f"RECENT CONVERSATION (since last optimization):\n{recent_conversation_text}")
             else:
                 context_parts.append("RECENT CONVERSATION: No new messages since last optimization")
-            
-            prd_context = f"""{chr(10).join(context_parts)}
-
-INSTRUCTIONS: Generate a comprehensive PRD using all the accumulated data above as the foundation. The PRD sections contain specific structured information, while the conversation summary provides broader context. Incorporate any relevant insights from recent conversation. Prioritize structured PRD data but enhance with conversational context."""
+            prd_context = f"""{chr(10).join(context_parts)}\n\nINSTRUCTIONS: Generate a comprehensive PRD using all the accumulated data above as the foundation. The PRD sections contain specific structured information, while the conversation summary provides broader context. Incorporate any relevant insights from recent conversation. Prioritize structured PRD data but enhance with conversational context.\n\nIMPORTANT: Do NOT include any reviewer signature tables or signature checklists. In the Problem Statement section, do NOT use boxes, borders, or tables—just use plain text/paragraphs for the content."""
         else:
-            prd_context = f"""CONVERSATION DATA:
-{recent_conversation_text}
-
-INSTRUCTIONS: Generate a comprehensive PRD based on the conversation below."""
+            prd_context = f"""CONVERSATION DATA:\n{recent_conversation_text}"""
         
-        prd_prompt = f"""{prd_context}
+        prd_prompt = prd_context + """
 
 Generate a comprehensive Product Requirements Document (PRD) in markdown format using these exact sections in this order:
+
+Use these exact sections in this order:
 
 # Product Requirements Document
 
@@ -344,17 +381,18 @@ How will we measure if this is successful? What KPIs matter?
 ## Out of Scope
 What we are NOT building in this version.
 
-For each section, use the provided data sources. If information for a section is not available, write "To be defined based on further discussion" for that section.
+## FAQs
 
-STYLE & TONE RULES
-------------------
-* **Voice:** Confident, crisp, "senior PM in a hurry."  
-* **Formatting:** Use headings, bullets, short paragraphs. No walls of text.  
-* **No Jargon Dumping:** Define obscure terms or link out.  
-* **Be Direct:** Call out weak assumptions or logic, respectfully.  
-* **Build Momentum:** Help the user ship something—not just ponder it.
+Optional: Include an FAQ when helpful to answer high level questions so it is easier for people to grasp the point of the project without getting lost in the details of product definition. 
 
-Generate the PRD now:"""
+Impact Checklist
+
+* Permissions  
+* Reporting  
+* Pricing  
+* API  
+* Global
+"""
 
         # Get PRD from OpenAI
         try:
@@ -365,12 +403,12 @@ Generate the PRD now:"""
                     'Authorization': f'Bearer {OPENAI_API_KEY}'
                 },
                 json={
-                    'model': 'gpt-4.1-mini',
+                    'model': 'gpt-4.1',
                     'messages': [{'role': 'user', 'content': prd_prompt}],
                     'max_tokens': 4096,
                     'temperature': 0.45
                 },
-                timeout=30  # Add timeout
+                timeout=60  # Increased timeout to 60 seconds
             )
         except requests.exceptions.RequestException as e:
             error_msg = f"Failed to connect to OpenAI API: {str(e)}"
@@ -385,19 +423,80 @@ Generate the PRD now:"""
             return https_fn.Response(json.dumps({'error': 'No PRD generated'}), headers=headers, status=500)
             
         prd_markdown = result['choices'][0]['message']['content']
+        # Remove leading triple backticks (```markdown or ```) if present
+        prd_markdown = prd_markdown.strip()
+        if prd_markdown.startswith('```markdown'):
+            prd_markdown = prd_markdown[9:].strip()
+            if prd_markdown.startswith('\n'):
+                prd_markdown = prd_markdown[1:]
+            if prd_markdown.endswith('```'):
+                prd_markdown = prd_markdown[:-3].strip()
+        elif prd_markdown.startswith('```'):
+            prd_markdown = prd_markdown[3:].strip()
+            if prd_markdown.startswith('\n'):
+                prd_markdown = prd_markdown[1:]
+            if prd_markdown.endswith('```'):
+                prd_markdown = prd_markdown[:-3].strip()
         
         # Convert markdown to Word document
         doc = Document()
         doc.add_heading('Product Requirements Document', 0)
         doc.add_paragraph('Generated by Explo Chat-PRD')
-        doc.add_paragraph(f'Generated on: {tempfile.gettempdir()}')  # Using temp as date placeholder
-        doc.add_page_break()
+        # Removed page break to avoid empty first page
+
+        def add_markdown_paragraph(md_line):
+            """Add a paragraph with bold/italic markdown formatting (all occurrences)."""
+            p = doc.add_paragraph()
+            pos = 0
+            # Find all **bold** and *italic* (not overlapping)
+            for match in re.finditer(r'(\*\*[^*]+\*\*|\*[^*]+\*)', md_line):
+                start, end = match.span()
+                if start > pos:
+                    p.add_run(md_line[pos:start])
+                text = match.group(0)
+                if text.startswith('**') and text.endswith('**'):
+                    run = p.add_run(text[2:-2])
+                    run.bold = True
+                elif text.startswith('*') and text.endswith('*'):
+                    run = p.add_run(text[1:-1])
+                    run.italic = True
+                pos = end
+            if pos < len(md_line):
+                p.add_run(md_line[pos:])
+            return p
+
+        def add_markdown_to_cell(cell, text):
+            """Apply markdown bold/italic to a table cell."""
+            cell.text = ''  # Clear default
+            p = cell.paragraphs[0]
+            pos = 0
+            for match in re.finditer(r'(\*\*[^*]+\*\*|\*[^*]+\*)', text):
+                start, end = match.span()
+                if start > pos:
+                    p.add_run(text[pos:start])
+                mtext = match.group(0)
+                if mtext.startswith('**') and mtext.endswith('**'):
+                    run = p.add_run(mtext[2:-2])
+                    run.bold = True
+                elif mtext.startswith('*') and mtext.endswith('*'):
+                    run = p.add_run(mtext[1:-1])
+                    run.italic = True
+                pos = end
+            if pos < len(text):
+                p.add_run(text[pos:])
+
+        # Table parsing helpers
+        def is_table_divider(line):
+            return re.match(r'^\|?\s*-+\s*\|', line)
+        def is_table_row(line):
+            return line.strip().startswith('|') and line.strip().endswith('|')
         
-        # Simple markdown to docx conversion
         lines = prd_markdown.split('\n')
-        for line in lines:
-            line = line.strip()
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
             if not line:
+                i += 1
                 continue
             elif line.startswith('# '):
                 doc.add_heading(line[2:], level=1)
@@ -405,11 +504,34 @@ Generate the PRD now:"""
                 doc.add_heading(line[3:], level=2)
             elif line.startswith('### '):
                 doc.add_heading(line[4:], level=3)
-            elif line.startswith('- ') or line.startswith('* '):
-                # Handle bullet points
-                p = doc.add_paragraph(line[2:], style='List Bullet')
+            elif (line.startswith('- ') or line.startswith('* ')):
+                doc.add_paragraph(line[2:], style='List Bullet')
+            elif is_table_row(line):
+                # Parse markdown table
+                header_cells = [cell.strip() for cell in line.strip('|').split('|')]
+                i += 1
+                # Skip divider
+                while i < len(lines) and is_table_divider(lines[i]):
+                    i += 1
+                # Collect rows
+                table_rows = []
+                while i < len(lines) and is_table_row(lines[i]):
+                    row_cells = [cell.strip() for cell in lines[i].strip('|').split('|')]
+                    table_rows.append(row_cells)
+                    i += 1
+                # Add table to docx
+                table = doc.add_table(rows=1, cols=len(header_cells))
+                table.style = 'Table Grid'
+                for j, cell in enumerate(header_cells):
+                    add_markdown_to_cell(table.cell(0, j), cell)
+                for row in table_rows:
+                    row_cells = table.add_row().cells
+                    for j, cell in enumerate(row):
+                        add_markdown_to_cell(row_cells[j], cell)
+                continue  # already incremented i
             else:
-                doc.add_paragraph(line)
+                add_markdown_paragraph(line)
+            i += 1
         
         # Save to temporary file
         temp_filename = f"Explo_PRD_{os.urandom(8).hex()}.docx"

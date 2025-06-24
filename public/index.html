@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat-PRD | Explo</title>
+    <title>PRD Writer | Explo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -34,20 +34,43 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Auto-resize textarea */
+        .auto-resize {
+            resize: none;
+            overflow: hidden;
+        }
+        /* Progress bar moving lines animation */
+        .progress-bar-container {
+            position: relative;
+            overflow: hidden;
+        }
+        .progress-bar-moving-lines {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: moveLines 2s linear infinite;
+        }
+        @keyframes moveLines {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        /* Message formatting */
+        .message-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .message-content p {
+            margin-bottom: 0.5rem;
+        }
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
-    <header class="bg-white shadow-md p-4">
-        <nav class="container mx-auto flex justify-between items-center">
-            <div class="text-2xl font-bold text-explo-blue">
-                <a href="https://www.explo.co/" class="hover:underline">Explo.co</a>
-            </div>
-            <div class="space-x-4">
-                <a href="#" class="text-gray-700 hover:text-explo-blue font-medium">Chat-PRD</a>
-                <span id="userIdDisplay" class="ml-4 text-xs text-gray-500">Simplified Version</span>
-            </div>
-        </nav>
-    </header>
     <main class="flex-grow container mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
         <!-- PRD Assistant Sidebar -->
         <div class="lg:w-1/3 bg-white p-6 rounded-lg shadow-md flex flex-col space-y-4">
@@ -82,6 +105,19 @@
                 Export Generated PRD
                 <span id="exportSpinner" class="spinner hidden"></span>
             </button>
+
+            <!-- Progress Bar Inline (not modal) -->
+            <div id="progressBarBlock" class="w-full mt-4 hidden">
+                <div class="bg-white rounded-lg shadow-lg p-4 flex flex-col items-center">
+                    <div id="progressStage" class="mb-2 text-base font-semibold text-explo-blue">Exporting PRD...</div>
+                    <div class="w-full bg-gray-200 rounded-full h-4 mb-2 progress-bar-container">
+                        <div id="progressBar" class="bg-explo-blue h-4 rounded-full transition-all duration-500 relative" style="width: 0%">
+                            <div class="progress-bar-moving-lines"></div>
+                        </div>
+                    </div>
+                    <div id="progressPercent" class="text-sm text-gray-700">0%</div>
+                </div>
+            </div>
         </div>
 
         <!-- Chat Area -->
@@ -90,8 +126,8 @@
             <div id="chatWindow" class="flex-grow overflow-y-auto border border-gray-200 rounded-lg p-4 mb-4 space-y-4 bg-gray-50 min-h-[400px]">
                 <!-- Messages will be added here dynamically -->
             </div>
-            <div class="flex items-center space-x-3">
-                <input type="text" id="chatInput" placeholder="Ask a question or describe your product idea..." class="flex-grow p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-explo-blue">
+            <div class="flex items-end space-x-3">
+                <textarea id="chatInput" placeholder="Ask a question or describe your product idea... (Shift+Enter for new line)" class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-explo-blue auto-resize min-h-[48px] max-h-32"></textarea>
                 <button id="sendChatBtn" class="px-5 py-3 bg-explo-blue text-white font-semibold rounded-full shadow-md hover:bg-explo-darkblue focus:outline-none focus:ring-2 focus:ring-explo-blue focus:ring-opacity-75">
                     Send
                     <span id="chatSpinner" class="spinner hidden"></span>
@@ -131,15 +167,35 @@
         }
 
         // UI Elements
-        const chatWindow = document.getElementById('chatWindow');
-        const chatInput = document.getElementById('chatInput');
-        const sendChatBtn = document.getElementById('sendChatBtn');
-        const exportPrdBtn = document.getElementById('exportPrdBtn');
+      const chatWindow = document.getElementById('chatWindow');
+      const chatInput = document.getElementById('chatInput');
+      const sendChatBtn = document.getElementById('sendChatBtn');
+      const exportPrdBtn = document.getElementById('exportPrdBtn');
         const clearChatBtn = document.getElementById('clearChatBtn');
-        const chatStatus = document.getElementById('chatStatus');
+      const chatStatus = document.getElementById('chatStatus');
         const status = document.getElementById('status');
-        const chatSpinner = document.getElementById('chatSpinner');
-        const exportSpinner = document.getElementById('exportSpinner');
+      const chatSpinner = document.getElementById('chatSpinner');
+      const exportSpinner = document.getElementById('exportSpinner');
+  
+        // Auto-resize textarea
+        function autoResizeTextarea() {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = Math.min(chatInput.scrollHeight, 128) + 'px';
+        }
+
+        // Auto-scroll chat window to bottom
+        function scrollToBottom() {
+            // Use multiple timeouts to ensure content is fully rendered
+            setTimeout(() => {
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }, 50);
+            setTimeout(() => {
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }, 150);
+            setTimeout(() => {
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }, 300);
+        }
 
         // Load conversation from localStorage on page load
         function loadConversation() {
@@ -153,7 +209,7 @@
                     console.error('Failed to load conversation:', e);
                     showStatus(status, 'Failed to load saved conversation', 'error');
                 }
-            } else {
+                  } else {
                 // Add initial AI message
                 addMessage('assistant', "Hello! I'm your PRD Assistant. Tell me about your product idea and I'll help you build a comprehensive Product Requirements Document. What would you like to create?");
             }
@@ -179,46 +235,55 @@
         }
 
         // Display message in UI
-        function displayMessage(text, isUser) {
-            const messageContainer = document.createElement('div');
-            messageContainer.className = `flex items-start ${isUser ? 'justify-end' : ''}`;
-
-            // Basic Markdown to HTML conversion for AI responses
-            let formattedText = text;
+      function displayMessage(text, isUser) {
+          const messageContainer = document.createElement('div');
+          messageContainer.className = `flex items-start ${isUser ? 'justify-end' : ''}`;
+  
+          // Enhanced Markdown to HTML conversion for AI responses
+          let formattedText = text;
+          if (!isUser) {
+               formattedText = formattedText
+                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                  .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
+                  .replace(/^- (.*)/gm, '<li>$1</li>') // List items
+                  .replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>') // Inline code
+                  .replace(/\n\n/g, '</p><p>') // Double line breaks become paragraph breaks
+                  .replace(/\n/g, '<br>'); // Single line breaks become <br>
+               
+               // Wrap in paragraph tags if not already wrapped
+               if (!formattedText.startsWith('<p>')) {
+                   formattedText = `<p>${formattedText}</p>`;
+               }
+               
+               // Handle lists
+               if (formattedText.includes('<li>')) {
+                    formattedText = formattedText.replace(/<p>(<li>.*?)<\/p>/gs, '<ul class="list-disc list-inside mb-2">$1</ul>');
+               }
+          }
+  
             if (!isUser) {
-                formattedText = formattedText
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
-                    .replace(/^- (.*)/gm, '<li>$1</li>') // List items
-                    .replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>'); // Inline code
-                if (formattedText.includes('<li>')) {
-                    formattedText = `<ul class="list-disc list-inside">${formattedText}</ul>`;
-                }
-            }
-
-            if (!isUser) {
-                const avatar = document.createElement('div');
+          const avatar = document.createElement('div');
                 avatar.className = 'flex-shrink-0 w-8 h-8 rounded-full bg-explo-blue flex items-center justify-center text-white text-sm font-bold mr-3';
                 avatar.textContent = 'AI';
                 messageContainer.appendChild(avatar);
             }
-
-            const messageBubble = document.createElement('div');
+  
+          const messageBubble = document.createElement('div');
             messageBubble.className = `p-3 rounded-xl max-w-[80%] ${isUser ? 'bg-explo-blue text-white ml-auto' : 'bg-gray-200 text-gray-800'}`;
-            messageBubble.innerHTML = `<p class="text-sm">${formattedText}</p>`;
-            
-            if (isUser) {
+          messageBubble.innerHTML = `<div class="text-sm message-content">${formattedText}</div>`;
+  
+          if (isUser) {
                 const userAvatar = document.createElement('div');
                 userAvatar.className = 'flex-shrink-0 w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-sm font-bold ml-3';
                 userAvatar.textContent = 'U';
-                messageContainer.appendChild(messageBubble);
-                messageContainer.appendChild(userAvatar);
-            } else {
-                messageContainer.appendChild(messageBubble);
-            }
+              messageContainer.appendChild(messageBubble);
+              messageContainer.appendChild(userAvatar);
+          } else {
+              messageContainer.appendChild(messageBubble);
+          }
 
-            chatWindow.appendChild(messageContainer);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
+          chatWindow.appendChild(messageContainer);
+            scrollToBottom();
         }
 
         // Render entire conversation
@@ -249,6 +314,7 @@
             // Add user message
             addMessage('user', messageText);
             chatInput.value = '';
+            autoResizeTextarea(); // Reset textarea height
             
             // Increment message counter for optimization
             addTokens(estimateTokens(messageText));
@@ -289,11 +355,11 @@
                     throw new Error(result.error || 'Chat request failed');
                 }
 
-            } catch (error) {
+          } catch (error) {
                 console.error('Chat error:', error);
                 showStatus(chatStatus, `Error: ${error.message}`, 'error');
                 displayMessage("Sorry, I encountered an error. Please try again.", false);
-            } finally {
+          } finally {
                 sendChatBtn.disabled = false;
                 chatSpinner.classList.add('hidden');
             }
@@ -308,15 +374,15 @@
                 showStatus(chatStatus, 'Analyzing conversation and extracting PRD information...', 'info');
                 
                 const response = await fetch('/optimize', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         conversation: conversation,
                         totalTokens: totalTokens 
                     })
-                });
-
-                const result = await response.json();
+              });
+  
+              const result = await response.json();
                 
                 if (response.ok && result.optimizedConversation) {
                     // Replace conversation with optimized version
@@ -332,60 +398,160 @@
                     // Add a system message to show optimization occurred
                     displayMessage(`🔧 **Conversation Optimized**\n\nI've analyzed our conversation and extracted key PRD information. Token usage reduced by ${Math.round(((result.originalTokens - result.optimizedTokens) / result.originalTokens) * 100)}%! This helps me maintain context while reducing processing time. We can continue our discussion!`, false);
                     
-                } else {
+              } else {
                     throw new Error(result.error || 'Optimization failed');
-                }
+              }
 
-            } catch (error) {
+          } catch (error) {
                 console.error('Optimization error:', error);
                 showStatus(chatStatus, `Optimization warning: ${error.message}`, 'error');
-            } finally {
+          } finally {
                 isOptimizing = false;
             }
+        }
+
+        // Progress bar stages
+        const progressStages = [
+            { text: "Analyzing conversation history...", percent: 15 },
+            { text: "Extracting key product insights...", percent: 30 },
+            { text: "Structuring PRD sections...", percent: 50 },
+            { text: "Generating detailed content...", percent: 75 },
+            { text: "Formatting document...", percent: 90 },
+            { text: "Finalizing download...", percent: 99 }
+        ];
+        let progressInterval = null;
+        let currentStage = 0;
+        let progressActive = false;
+
+        const progressBarBlock = document.getElementById('progressBarBlock');
+        const progressBar = document.getElementById('progressBar');
+        const progressStage = document.getElementById('progressStage');
+        const progressPercent = document.getElementById('progressPercent');
+
+        function showProgressBar() {
+            progressBarBlock.classList.remove('hidden');
+            progressBarBlock.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressStage.textContent = progressStages[0].text;
+            currentStage = 0;
+            progressActive = true;
+            progressBar.classList.remove('bg-red-600');
+            progressBar.classList.add('bg-explo-blue');
+            progressInterval = setInterval(() => {
+                if (!progressActive) return;
+                if (currentStage < progressStages.length) {
+                    progressBar.style.width = progressStages[currentStage].percent + '%';
+                    progressPercent.textContent = progressStages[currentStage].percent + '%';
+                    progressStage.textContent = progressStages[currentStage].text;
+                    currentStage++;
+                }
+            }, 3600); // 3x slower: 1200ms -> 3600ms
+        }
+
+        function completeProgressBar() {
+            progressActive = false;
+            clearInterval(progressInterval);
+            progressBar.style.width = '100%';
+            progressPercent.textContent = '100%';
+            progressStage.textContent = 'Export complete!';
+            setTimeout(() => {
+                progressBarBlock.classList.add('hidden');
+            }, 1200);
+        }
+
+        function errorProgressBar(errorMessage = 'Export failed. Please try again.') {
+            progressActive = false;
+            clearInterval(progressInterval);
+            progressBar.style.width = '100%';
+            progressBar.classList.remove('bg-explo-blue');
+            progressBar.classList.add('bg-red-600');
+            progressPercent.textContent = 'Error';
+            progressStage.textContent = errorMessage;
+            setTimeout(() => {
+                progressBarBlock.classList.add('hidden');
+            }, 3000); // Show error longer so user can read it
         }
 
         // Export PRD
         async function exportPRD() {
             if (conversation.length <= 1) {
                 showStatus(status, 'Please have a conversation first before exporting', 'error');
-                return;
-            }
+              return;
+          }
 
-            exportPrdBtn.disabled = true;
+          exportPrdBtn.disabled = true;
             exportSpinner.classList.remove('hidden');
             sendChatBtn.disabled = true;
             showStatus(status, 'Generating PRD...', 'info', true);
+            showProgressBar();
 
             try {
                 const response = await fetch('/export', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ conversation })
-                });
-
-                const result = await response.json();
+              });
+  
+              const result = await response.json();
                 
-                if (response.ok && result.downloadURL) {
+              if (response.ok && result.downloadURL) {
                     showStatus(status, 'PRD ready for download!', 'success');
-                    
+                    completeProgressBar();
                     // Trigger download
-                    const a = document.createElement('a');
-                    a.href = result.downloadURL;
-                    a.download = `Explo_PRD_${new Date().toISOString().slice(0, 10)}.docx`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                } else {
+                  const a = document.createElement('a');
+                  a.href = result.downloadURL;
+                  a.download = `Explo_PRD_${new Date().toISOString().slice(0, 10)}.docx`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                    // Show fallback download link after 2 seconds
+                    setTimeout(() => {
+                        showStatus(status, `PRD generated! <a href="${result.downloadURL}" download="${`Explo_PRD_${new Date().toISOString().slice(0, 10)}.docx`}" class="text-blue-600 hover:underline font-medium">Click here if download didn't start</a>`, 'success');
+                    }, 2000);
+              } else {
+                    // Enhanced error handling with specific messages
+                    let errorMessage = 'Export failed. Please try again.';
+                    if (result.error) {
+                        if (result.error.includes('API key')) {
+                            errorMessage = 'Configuration error: OpenAI API key not set up. Please contact support.';
+                        } else if (result.error.includes('timeout')) {
+                            errorMessage = 'Request timed out. Please try again with a shorter conversation.';
+                        } else if (result.error.includes('storage')) {
+                            errorMessage = 'File storage error. Please try again in a few moments.';
+                        } else if (result.error.includes('Failed to connect')) {
+                            errorMessage = 'Network error. Please check your connection and try again.';
+                        } else {
+                            errorMessage = `Export failed: ${result.error}`;
+                        }
+                    }
+                    errorProgressBar(errorMessage);
                     throw new Error(result.error || 'Failed to generate PRD');
-                }
+              }
 
-            } catch (error) {
+          } catch (error) {
                 console.error('Export error:', error);
-                showStatus(status, `Export error: ${error.message}`, 'error');
-            } finally {
-                exportPrdBtn.disabled = false;
+                let userErrorMessage = 'Export failed. Please try again.';
+                
+                // Provide specific error messages based on error type
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    userErrorMessage = 'Network error: Unable to connect to the server. Please check your internet connection.';
+                } else if (error.message.includes('timeout')) {
+                    userErrorMessage = 'Request timed out. The export is taking longer than expected. Please try again.';
+                } else if (error.message.includes('API')) {
+                    userErrorMessage = 'Service temporarily unavailable. Please try again in a few minutes.';
+                } else if (error.message.includes('storage') || error.message.includes('file')) {
+                    userErrorMessage = 'File processing error. Please try again with a shorter conversation.';
+                } else {
+                    userErrorMessage = `Export error: ${error.message}`;
+                }
+                
+                errorProgressBar(userErrorMessage);
+                showStatus(status, userErrorMessage, 'error');
+          } finally {
+              exportPrdBtn.disabled = false;
                 exportSpinner.classList.add('hidden');
-                sendChatBtn.disabled = false;
+              sendChatBtn.disabled = false;
             }
         }
 
@@ -401,11 +567,14 @@
         }
 
         // Event Listeners
-        chatInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
+        chatInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
                 sendMessage(chatInput.value);
             }
         });
+
+        chatInput.addEventListener('input', autoResizeTextarea);
 
         sendChatBtn.addEventListener('click', () => {
             sendMessage(chatInput.value);
@@ -417,7 +586,9 @@
         // Initialize app
         window.onload = () => {
             loadConversation();
-            showStatus(status, 'Ready to chat! (Simplified version)', 'success');
+            showStatus(status, 'Ready to chat!', 'success');
+            autoResizeTextarea(); // Initialize textarea height
         };
-    </script>
+  </script>
+</body>
 </html>
