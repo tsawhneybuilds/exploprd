@@ -23,25 +23,12 @@
     ],
     "rewrites": [
       {
-        "source": "/chat/**",
-        "run": {
-          "serviceId": "chat-prd-streaming",
-          "region": "us-central1"
-        }
+        "source": "/chat",
+        "function": "chat_simple"
       },
       {
         "source": "/export",
-        "run": {
-          "serviceId": "chat-prd-streaming",
-          "region": "us-central1"
-        }
-      },
-      {
-        "source": "/health",
-        "run": {
-          "serviceId": "chat-prd-streaming",
-          "region": "us-central1"
-        }
+        "function": "export_simple"
       },
       {
         "source": "/optimize",
