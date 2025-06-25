@@ -1,3 +1,4 @@
+# Chat-PRD Streaming API - Version 1.0.1
 import os
 import json
 import asyncio
@@ -48,7 +49,7 @@ except Exception as e:
     storage_client = None
 
 # Initialize OpenAI
-openai.api_key = os.getenv("openai-api-key")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Rate limiting
 class RateLimiter:
