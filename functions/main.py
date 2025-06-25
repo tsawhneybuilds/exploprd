@@ -445,24 +445,26 @@ Impact Checklist
         # Removed page break to avoid empty first page
 
         def add_markdown_paragraph(md_line):
-            """Add a paragraph with bold/italic markdown formatting (all occurrences)."""
-            p = doc.add_paragraph()
+            """Add a paragraph with bold/italic markdown formatting (all occurrences), including for list items."""
+            # If this is a bullet point, use List Bullet style
+            is_bullet = md_line.startswith('- ') or md_line.startswith('* ')
+            text = md_line[2:] if is_bullet else md_line
+            p = doc.add_paragraph(style='List Bullet' if is_bullet else None)
             pos = 0
-            # Find all **bold** and *italic* (not overlapping)
-            for match in re.finditer(r'(\*\*[^*]+\*\*|\*[^*]+\*)', md_line):
+            for match in re.finditer(r'(\*\*[^*]+\*\*|\*[^*]+\*)', text):
                 start, end = match.span()
                 if start > pos:
-                    p.add_run(md_line[pos:start])
-                text = match.group(0)
-                if text.startswith('**') and text.endswith('**'):
-                    run = p.add_run(text[2:-2])
+                    p.add_run(text[pos:start])
+                mtext = match.group(0)
+                if mtext.startswith('**') and mtext.endswith('**'):
+                    run = p.add_run(mtext[2:-2])
                     run.bold = True
-                elif text.startswith('*') and text.endswith('*'):
-                    run = p.add_run(text[1:-1])
+                elif mtext.startswith('*') and mtext.endswith('*'):
+                    run = p.add_run(mtext[1:-1])
                     run.italic = True
                 pos = end
-            if pos < len(md_line):
-                p.add_run(md_line[pos:])
+            if pos < len(text):
+                p.add_run(text[pos:])
             return p
 
         def add_markdown_to_cell(cell, text):
@@ -495,6 +497,10 @@ Impact Checklist
         i = 0
         while i < len(lines):
             line = lines[i].strip()
+            # Remove lines that are just '---' (markdown horizontal rules)
+            if line == '---':
+                i += 1
+                continue
             if not line:
                 i += 1
                 continue
