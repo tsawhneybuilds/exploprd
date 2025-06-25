@@ -169,18 +169,14 @@ async def stream_openai_response(messages: List[Dict[str, str]]) -> AsyncGenerat
                 chunk_count += 1
                 
                 # Yield individual chunk
-                yield f"data: {json.dumps({
-                    'type': 'chunk', 
-                    'content': content,
-                    'chunk_id': chunk_count,
-                    'request_id': request_id
-                })}\n\n"
+                chunk_data = {'type': 'chunk', 'content': content, 'chunk_id': chunk_count, 'request_id': request_id}
+                yield f"data: {json.dumps(chunk_data)}\n\n"
         
         duration = time.time() - start_time
         logger.info(f"Stream {request_id} completed in {duration:.2f}s with {chunk_count} chunks")
         
         # Final message with complete response
-        yield f"data: {json.dumps({
+        complete_data = {
             'type': 'complete', 
             'content': full_response,
             'metadata': {
@@ -188,7 +184,8 @@ async def stream_openai_response(messages: List[Dict[str, str]]) -> AsyncGenerat
                 'chunk_count': chunk_count,
                 'request_id': request_id
             }
-        })}\n\n"
+        }
+        yield f"data: {json.dumps(complete_data)}\n\n"
         
         yield "data: [DONE]\n\n"
         
@@ -197,11 +194,8 @@ async def stream_openai_response(messages: List[Dict[str, str]]) -> AsyncGenerat
         
     except Exception as e:
         logger.error(f"Stream {request_id} failed: {str(e)}")
-        yield f"data: {json.dumps({
-            'type': 'error', 
-            'content': f"Streaming error: {str(e)}", 
-            'request_id': request_id
-        })}\n\n"
+        error_data = {'type': 'error', 'content': f'Streaming error: {str(e)}', 'request_id': request_id}
+        yield f"data: {json.dumps(error_data)}\n\n"
 
 # API endpoints
 @app.post("/chat/stream")
