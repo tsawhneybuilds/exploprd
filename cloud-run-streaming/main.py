@@ -48,7 +48,7 @@ except Exception as e:
     storage_client = None
 
 # Initialize OpenAI
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = os.getenv("openai-api-key")
 
 # Rate limiting
 class RateLimiter:
