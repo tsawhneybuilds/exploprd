@@ -53,7 +53,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Rate limiting
 class RateLimiter:
-    def __init__(self, max_requests: int = 20, window_seconds: int = 60):
+    def __init__(self, max_requests: int = 100, window_seconds: int = 60):
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self.requests = defaultdict(list)
