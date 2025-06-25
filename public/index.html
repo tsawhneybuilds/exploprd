@@ -74,25 +74,6 @@
             position: relative;
         }
 
-        .streaming-content::after {
-            content: '';
-            display: inline-block;
-            width: 8px;
-            height: 16px;
-            background-color: #0000FF;
-            animation: blink 1s infinite;
-            margin-left: 2px;
-        }
-
-        .streaming-complete .streaming-content::after {
-            display: none;
-        }
-
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
-
         /* Smooth text appearance */
         .message-content {
             animation: fadeIn 0.3s ease-in;
@@ -109,28 +90,21 @@
             font-style: italic;
             font-size: 0.875rem;
         }
+
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
-    <main class="flex-grow container mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
-        <!-- PRD Assistant Sidebar -->
-        <div class="lg:w-1/3 bg-white p-6 rounded-lg shadow-md flex flex-col min-h-[90vh] sticky top-0 h-[100vh] relative" style="max-height:100vh;">
-            <div class="flex flex-col space-y-4 flex-grow pb-20"> <!-- Added pb-20 for logo space -->
+          <main class="flex-grow container mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8 items-start">
+          <!-- PRD Assistant Sidebar -->
+        <div class="lg:w-1/3 bg-white p-6 rounded-lg shadow-md flex flex-col" style="height: fit-content;">
+            <div class="flex flex-col space-y-4">
                 <h2 class="text-xl font-bold">Free PRD AI</h2>
                 <p class="text-gray-600">Unlimited Free Chat with AI to build your Product Requirements Document. Conversation is saved locally in your browser.</p>
                 
-                <div id="status" class="text-sm text-gray-600">Ready to chat!</div>
+                <div id="status" class="text-sm text-gray-600"></div>
                 
-                <h3 class="text-lg font-bold mt-4">Quick Start Tips</h3>
-                <ul class="space-y-2 text-gray-700 text-sm">
-                    <li class="text-gray-600">• Describe your product idea</li>
-                    <li class="text-gray-600">• Define your target users</li>
-                    <li class="text-gray-600">• Outline key features</li>
-                    <li class="text-gray-600">• Discuss technical requirements</li>
-                    <li class="text-gray-600">• Ask for PRD structure guidance</li>
-                </ul>
-                
-                <div class="bg-blue-50 p-4 rounded-lg mt-4">
+                <div class="bg-blue-50 p-4 rounded-lg">
                     <h4 class="font-semibold text-blue-800">Example Prompts:</h4>
                     <ul class="text-sm text-blue-700 mt-2 space-y-1">
                         <li>"Help me structure a PRD for a mobile app"</li>
@@ -143,7 +117,7 @@
                     Clear Conversation
                 </button>
                 
-                <button id="exportPrdBtn" class="mt-auto px-4 py-2 bg-green-500 text-white font-semibold rounded-full shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 disabled:opacity-50">
+                <button id="exportPrdBtn" class="px-4 py-2 bg-green-500 text-white font-semibold rounded-full shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 disabled:opacity-50">
                     Export Generated PRD
                     <span id="exportSpinner" class="spinner hidden"></span>
                 </button>
@@ -161,27 +135,41 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Explo Logo - Fixed positioning to prevent displacement -->
-            <div class="absolute bottom-2 left-6 right-6 flex justify-center items-center bg-white z-10" style="height: 80px;">
-                <img src="/logo-explo.png" alt="Explo Logo" class="opacity-90" style="width:100%; max-width:260px; min-width:120px; height:auto; padding: 8px 0;" />
-            </div>
         </div>
 
         <!-- Chat Area -->
-        <div class="lg:w-2/3 bg-white p-6 rounded-lg shadow-md flex flex-col">
-            <h2 class="text-xl font-bold mb-4">Chat with your PRD Assistant</h2>
-            <div id="chatWindow" class="flex-grow overflow-y-auto border border-gray-200 rounded-lg p-4 mb-4 space-y-4 bg-gray-50 min-h-[400px]">
-                <!-- Messages will be added here dynamically -->
+        <div id="chatContainer" class="lg:w-2/3 bg-white rounded-lg shadow-md flex flex-col">
+            <!-- Intro State -->
+            <div id="introState" class="flex flex-col items-center justify-center p-6" style="min-height: 500px;">
+                <div class="text-center max-w-2xl">
+                    <h1 class="text-4xl font-bold text-gray-800 mb-6">Hi, I'm your PRD Assistant</h1>
+                    <p class="text-gray-600 text-xl mb-8">I'll help you build a comprehensive Product Requirements Document. Tell me about your product idea and let's get started!</p>
+                    
+                    <div class="flex items-center space-x-3 max-w-3xl mx-auto">
+                        <textarea id="chatInput" placeholder="Start typing to continue" class="flex-grow p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-explo-blue auto-resize min-h-[56px] max-h-32 text-base"></textarea>
+                        <button id="sendChatBtn" class="px-6 py-4 bg-explo-blue text-white font-semibold rounded-xl shadow-md hover:bg-explo-darkblue focus:outline-none focus:ring-2 focus:ring-explo-blue focus:ring-opacity-75">
+                            Send
+                            <span id="chatSpinner" class="spinner hidden"></span>
+                        </button>
+                    </div>
+                    <div id="chatStatus" class="text-sm text-gray-600 mt-3"></div>
+                </div>
             </div>
-            <div class="flex items-end space-x-3">
-                <textarea id="chatInput" placeholder="Ask a question or describe your product idea... (Shift+Enter for new line)" class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-explo-blue auto-resize min-h-[48px] max-h-32"></textarea>
-                <button id="sendChatBtn" class="px-5 py-3 bg-explo-blue text-white font-semibold rounded-full shadow-md hover:bg-explo-darkblue focus:outline-none focus:ring-2 focus:ring-explo-blue focus:ring-opacity-75">
-                    Send
-                    <span id="chatSpinner" class="spinner hidden"></span>
-                </button>
+
+            <!-- Chat State (hidden initially) -->
+            <div id="chatState" class="bg-white p-6 rounded-lg shadow-md flex-col w-full hidden">
+                <div id="chatWindow" class="flex-grow overflow-y-auto border border-gray-200 rounded-lg p-4 mb-4 space-y-4 bg-gray-50 min-h-[500px]">
+                    <!-- Messages will be added here dynamically -->
+                </div>
+                <div class="flex items-end space-x-3">
+                    <textarea id="chatInputChat" placeholder="Continue your conversation..." class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-explo-blue auto-resize min-h-[48px] max-h-32"></textarea>
+                    <button id="sendChatBtnChat" class="px-5 py-3 bg-explo-blue text-white font-semibold rounded-full shadow-md hover:bg-explo-darkblue focus:outline-none focus:ring-2 focus:ring-explo-blue focus:ring-opacity-75">
+                        Send
+                        <span id="chatSpinnerChat" class="spinner hidden"></span>
+                    </button>
+                </div>
+                <div id="chatStatusChat" class="text-sm text-gray-600 mt-2"></div>
             </div>
-            <div id="chatStatus" class="text-sm text-gray-600 mt-2"></div>
         </div>
     </main>
     <footer class="bg-explo-darkblue text-white p-4 text-center mt-8">
@@ -226,9 +214,10 @@
       const exportSpinner = document.getElementById('exportSpinner');
   
         // Auto-resize textarea
-        function autoResizeTextarea() {
-            chatInput.style.height = 'auto';
-            chatInput.style.height = Math.min(chatInput.scrollHeight, 128) + 'px';
+        function autoResizeTextarea(element = null) {
+            const textarea = element || this.target || chatInput;
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
         }
 
         // Auto-scroll chat window to bottom
@@ -250,16 +239,44 @@
             const saved = localStorage.getItem('prd_conversation');
             if (saved) {
                 try {
-                    conversation = JSON.parse(saved);
-                    renderConversation();
-                    showStatus(status, 'Conversation loaded from browser storage', 'success');
+                    const parsedConversation = JSON.parse(saved);
+                    
+                    // Validate conversation structure and remove duplicates
+                    if (Array.isArray(parsedConversation) && parsedConversation.length > 0) {
+                        // Remove duplicate consecutive messages
+                        const uniqueConversation = [parsedConversation[0]]; // Keep system message
+                        for (let i = 1; i < parsedConversation.length; i++) {
+                            const current = parsedConversation[i];
+                            const previous = parsedConversation[i - 1];
+                            
+                            // Only add if it's different from the previous message
+                            if (current.content !== previous.content || current.role !== previous.role) {
+                                uniqueConversation.push(current);
+                            }
+                        }
+                        
+                        conversation = uniqueConversation;
+                        showStatus(status, 'Conversation loaded from browser storage', 'success');
+                    } else {
+                        throw new Error('Invalid conversation format');
+                    }
                 } catch (e) {
                     console.error('Failed to load conversation:', e);
-                    showStatus(status, 'Failed to load saved conversation', 'error');
+                    showStatus(status, 'Failed to load saved conversation, starting fresh', 'error');
+                    // Reset to default conversation
+                    conversation = [{
+                        role: 'system',
+                        content: 'You are a Product Requirements Document (PRD) AI assistant. Help users create comprehensive PRDs by asking clarifying questions and providing structured guidance on product features, user stories, technical requirements, and success metrics.'
+                    }];
+                    // Clear corrupted data
+                    localStorage.removeItem('prd_conversation');
                 }
-                  } else {
-                // Add initial AI message
-                addMessage('assistant', "Hello! I'm your PRD Assistant. Tell me about your product idea and I'll help you build a comprehensive Product Requirements Document. What would you like to create?");
+            } else {
+                // No saved conversation - start fresh
+                conversation = [{
+                    role: 'system',
+                    content: 'You are a Product Requirements Document (PRD) AI assistant. Help users create comprehensive PRDs by asking clarifying questions and providing structured guidance on product features, user stories, technical requirements, and success metrics.'
+                }];
             }
         }
 
@@ -284,6 +301,11 @@
 
         // Display message in UI
       function displayMessage(text, isUser) {
+          // Switch from intro to chat mode on first message
+          if (conversation.length <= 2) { // System message + first user message
+              switchToChatMode();
+          }
+
           const messageContainer = document.createElement('div');
           messageContainer.className = `flex items-start ${isUser ? 'justify-end' : ''}`;
   
@@ -334,14 +356,11 @@
             scrollToBottom();
         }
 
-        // Render entire conversation
+        // Render entire conversation (deprecated - use initializeChatInterface instead)
         function renderConversation() {
-            chatWindow.innerHTML = '';
-            conversation.forEach(msg => {
-                if (msg.role !== 'system') {
-                    displayMessage(msg.content, msg.role === 'user');
-                }
-            });
+            // This function is deprecated to prevent rendering glitches
+            // Use initializeChatInterface() instead
+            console.warn('renderConversation() is deprecated');
         }
 
         // Show status message
@@ -367,11 +386,16 @@
             }
         }
 
-        const streamingSupported = detectStreamingSupport();
+        const streamingSupported = true;
         console.log('Streaming support:', streamingSupported ? 'Available' : 'Not available');
 
         // Enhanced message display with streaming support
         function displayStreamingMessage(isUser = false) {
+            // Switch from intro to chat mode on first message
+            if (conversation.length <= 2) { // System message + first user message
+                switchToChatMode();
+            }
+
             const messageContainer = document.createElement('div');
             messageContainer.className = `flex items-start ${isUser ? 'justify-end' : ''}`;
 
@@ -416,28 +440,58 @@
                 .replace(/<p>(<li>.*?)<\/p>/gs, '<ul class="list-disc list-inside mb-2">$1</ul>');
         }
 
+        // Helper function to clear active input and manage UI state
+        function clearActiveInput() {
+            const introState = document.getElementById('introState');
+            const chatState = document.getElementById('chatState');
+            
+            if (!introState.classList.contains('hidden')) {
+                // In intro mode
+                chatInput.value = '';
+                autoResizeTextarea(chatInput);
+                sendChatBtn.disabled = true;
+                document.getElementById('chatSpinner').classList.remove('hidden');
+                showStatus(document.getElementById('chatStatus'), 'Thinking...', 'info', true);
+            } else {
+                // In chat mode
+                chatInputChat.value = '';
+                autoResizeTextarea(chatInputChat);
+                sendChatBtnChat.disabled = true;
+                document.getElementById('chatSpinnerChat').classList.remove('hidden');
+                showStatus(document.getElementById('chatStatusChat'), 'Thinking...', 'info', true);
+            }
+        }
+
+        // Helper function to reset UI state
+        function resetUIState() {
+            sendChatBtn.disabled = false;
+            sendChatBtnChat.disabled = false;
+            document.getElementById('chatSpinner').classList.add('hidden');
+            document.getElementById('chatSpinnerChat').classList.add('hidden');
+        }
+
+        // Helper function to get active status element
+        function getActiveStatusElement() {
+            return document.getElementById('introState').classList.contains('hidden') ? 
+                document.getElementById('chatStatusChat') : document.getElementById('chatStatus');
+        }
+
         // Streaming message sender
         async function sendStreamingMessage(messageText) {
             if (!messageText.trim()) return;
 
             // Add user message
             addMessage('user', messageText);
-            chatInput.value = '';
-            autoResizeTextarea();
+            clearActiveInput();
             
             addTokens(estimateTokens(messageText));
-            
-            // Show loading state
-            sendChatBtn.disabled = true;
-            chatSpinner.classList.remove('hidden');
-            showStatus(chatStatus, 'Thinking...', 'info', true);
 
             // Create streaming AI message container
             const streamingContent = displayStreamingMessage(false);
             let fullResponse = '';
 
             try {
-                const response = await fetch('/chat/stream', {
+                const response = await fetch('http://localhost:8080/chat/stream', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -453,7 +507,7 @@
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
 
-                showStatus(chatStatus, 'Receiving response...', 'info');
+                showStatus(getActiveStatusElement(), 'Receiving response...', 'info');
 
                 while (true) {
                     const { done, value } = await reader.read();
@@ -480,13 +534,14 @@
                                     const formattedText = formatMarkdown(fullResponse);
                                     streamingContent.innerHTML = formattedText;
                                     scrollToBottom();
+                                    addBlinkingCursor(streamingContent);
                                 } else if (parsed.type === 'complete') {
                                     fullResponse = parsed.content;
                                     const formattedText = formatMarkdown(fullResponse);
                                     streamingContent.innerHTML = formattedText;
                                     
-                                    // Mark streaming as complete
-                                    streamingContent.classList.add('streaming-complete');
+                                    // Mark streaming as complete and remove cursor
+                                    removeBlinkingCursor(streamingContent);
                                 } else if (parsed.type === 'error') {
                                     throw new Error(parsed.content);
                                 }
@@ -497,11 +552,14 @@
                     }
                 }
 
+                // Remove cursor when streaming is done
+                removeBlinkingCursor(streamingContent);
+                
                 // Add to conversation history
                 conversation.push({ role: 'assistant', content: fullResponse });
                 saveConversation();
                 addTokens(0, estimateTokens(fullResponse));
-                showStatus(chatStatus, '✓ Response received', 'success');
+                showStatus(getActiveStatusElement(), '✓ Response received', 'success');
 
                 // Check for optimization
                 if (totalTokens > TOKEN_LIMIT && !isOptimizing) {
@@ -515,6 +573,9 @@
             } catch (error) {
                 console.error('Streaming error:', error);
                 
+                // Remove cursor from failed streaming message before removing it
+                removeBlinkingCursor(streamingContent);
+                
                 // Remove failed streaming message
                 streamingContent.parentElement.parentElement.remove();
                 
@@ -522,17 +583,16 @@
                 console.log('Falling back to non-streaming...');
                 return sendFallbackMessage(messageText);
             } finally {
-                sendChatBtn.disabled = false;
-                chatSpinner.classList.add('hidden');
+                resetUIState();
             }
         }
 
         // Fallback non-streaming message sender
         async function sendFallbackMessage(messageText) {
-            showStatus(chatStatus, 'Using fallback mode...', 'info');
+            showStatus(getActiveStatusElement(), 'Using fallback mode...', 'info');
             
             try {
-                const response = await fetch('/chat', {
+                const response = await fetch('http://localhost:8080/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ conversation })
@@ -547,7 +607,7 @@
                     } else {
                         addTokens(0, estimateTokens(result.response));
                     }
-                    showStatus(chatStatus, '✓ Response received (fallback)', 'success');
+                    showStatus(getActiveStatusElement(), '✓ Response received (fallback)', 'success');
                     
                     // Check for optimization
                     if (totalTokens > TOKEN_LIMIT && !isOptimizing) {
@@ -562,7 +622,7 @@
                 }
             } catch (fallbackError) {
                 console.error('Fallback also failed:', fallbackError);
-                showStatus(chatStatus, `Error: ${fallbackError.message}`, 'error');
+                showStatus(getActiveStatusElement(), `Error: ${fallbackError.message}`, 'error');
                 displayMessage("Sorry, I encountered an error. Please try again.", false);
             }
         }
@@ -592,7 +652,7 @@
             try {
                 console.log('Silent optimization: Analyzing conversation and extracting PRD information...');
                 
-                const response = await fetch('/optimize', {
+                const response = await fetch('http://localhost:8080/optimize', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -706,11 +766,12 @@
           exportPrdBtn.disabled = true;
             exportSpinner.classList.remove('hidden');
             sendChatBtn.disabled = true;
+            sendChatBtnChat.disabled = true;
             showStatus(status, 'Generating PRD...', 'info', true);
             showProgressBar();
 
             try {
-                const response = await fetch('/export', {
+                const response = await fetch('http://localhost:8080/export', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ conversation })
@@ -775,6 +836,7 @@
               exportPrdBtn.disabled = false;
                 exportSpinner.classList.add('hidden');
               sendChatBtn.disabled = false;
+              sendChatBtnChat.disabled = false;
             }
         }
 
@@ -783,13 +845,26 @@
             if (confirm('Are you sure you want to clear the entire conversation? This cannot be undone.')) {
                 conversation = [conversation[0]]; // Keep only system message
                 saveConversation();
-                chatWindow.innerHTML = '';
-                addMessage('assistant', "Hello! I'm your PRD Assistant. Tell me about your product idea and I'll help you build a comprehensive Product Requirements Document. What would you like to create?");
+                
+                // Reset to intro state
+                const introState = document.getElementById('introState');
+                const chatState = document.getElementById('chatState');
+                introState.classList.remove('hidden');
+                chatState.classList.add('hidden');
+                
+                // Clear both input fields
+                chatInput.value = '';
+                chatInputChat.value = '';
+                
                 showStatus(status, 'Conversation cleared', 'success');
             }
         }
 
         // Event Listeners
+        const chatInputChat = document.getElementById('chatInputChat');
+        const sendChatBtnChat = document.getElementById('sendChatBtnChat');
+
+        // Intro input handlers
         chatInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -803,15 +878,129 @@
             sendMessage(chatInput.value);
         });
 
+        // Chat input handlers
+        chatInputChat.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage(chatInputChat.value);
+            }
+        });
+
+        chatInputChat.addEventListener('input', () => {
+            autoResizeTextarea.call({ target: chatInputChat });
+        });
+
+        sendChatBtnChat.addEventListener('click', () => {
+            sendMessage(chatInputChat.value);
+        });
+
         exportPrdBtn.addEventListener('click', exportPRD);
         clearChatBtn.addEventListener('click', clearConversation);
+
+        // Initialize chat interface state
+        function initializeChatInterface() {
+            const introState = document.getElementById('introState');
+            const chatState = document.getElementById('chatState');
+            const chatWindow = document.getElementById('chatWindow');
+            
+            if (conversation.length <= 1) {
+                // Show intro state - no conversation exists
+                introState.classList.remove('hidden');
+                chatState.classList.add('hidden');
+                chatState.style.display = 'none';
+            } else {
+                // Show chat state if conversation exists
+                introState.classList.add('hidden');
+                chatState.classList.remove('hidden');
+                chatState.style.display = 'flex';
+                
+                // Clear and reload existing messages (skip system message at index 0)
+                chatWindow.innerHTML = '';
+                for (let i = 1; i < conversation.length; i++) {
+                    const message = conversation[i];
+                    // Use a direct rendering function that doesn't trigger mode switching
+                    renderMessageDirectly(message.content, message.role === 'user');
+                }
+            }
+        }
+
+        // Direct message rendering that doesn't trigger mode switching
+        function renderMessageDirectly(text, isUser) {
+            const chatWindow = document.getElementById('chatWindow');
+            const messageContainer = document.createElement('div');
+            messageContainer.className = `flex items-start ${isUser ? 'justify-end' : ''}`;
+  
+            // Enhanced Markdown to HTML conversion for AI responses
+            let formattedText = text;
+            if (!isUser) {
+                formattedText = formattedText
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
+                    .replace(/^- (.*)/gm, '<li>$1</li>') // List items
+                    .replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>') // Inline code
+                    .replace(/\n\n/g, '</p><p>') // Double line breaks become paragraph breaks
+                    .replace(/\n/g, '<br>'); // Single line breaks become <br>
+                 
+                 // Wrap in paragraph tags if not already wrapped
+                 if (!formattedText.startsWith('<p>')) {
+                     formattedText = `<p>${formattedText}</p>`;
+                 }
+                 
+                 // Handle lists
+                 if (formattedText.includes('<li>')) {
+                      formattedText = formattedText.replace(/<p>(<li>.*?)<\/p>/gs, '<ul class="list-disc list-inside mb-2">$1</ul>');
+                 }
+            }
+
+            if (!isUser) {
+                const avatar = document.createElement('div');
+                avatar.className = 'flex-shrink-0 w-8 h-8 rounded-full bg-explo-blue flex items-center justify-center text-white text-sm font-bold mr-3';
+                avatar.textContent = 'AI';
+                messageContainer.appendChild(avatar);
+            }
+
+            const messageBubble = document.createElement('div');
+            messageBubble.className = `p-3 rounded-xl max-w-[80%] ${isUser ? 'bg-explo-blue text-white ml-auto' : 'bg-gray-200 text-gray-800'}`;
+            messageBubble.innerHTML = `<div class="text-sm message-content">${formattedText}</div>`;
+
+            if (isUser) {
+                const userAvatar = document.createElement('div');
+                userAvatar.className = 'flex-shrink-0 w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-sm font-bold ml-3';
+                userAvatar.textContent = 'U';
+                messageContainer.appendChild(messageBubble);
+                messageContainer.appendChild(userAvatar);
+            } else {
+                messageContainer.appendChild(messageBubble);
+            }
+
+            chatWindow.appendChild(messageContainer);
+            scrollToBottom();
+        }
+
+        // Switch from intro to chat mode
+        function switchToChatMode() {
+            const introState = document.getElementById('introState');
+            const chatState = document.getElementById('chatState');
+            
+            introState.classList.add('hidden');
+            chatState.classList.remove('hidden');
+            chatState.style.display = 'flex';
+        }
 
         // Initialize app
         window.onload = () => {
             loadConversation();
-            showStatus(status, 'Ready to chat!', 'success');
+            initializeChatInterface();
             autoResizeTextarea(); // Initialize textarea height
         };
-  </script>
+
+        // Cursor functions removed - no cursor needed for streaming
+        function addBlinkingCursor(targetElem) {
+            // No cursor needed
+        }
+        function removeBlinkingCursor(targetElem) {
+            // No cursor needed
+        }
+    </script>
 </body>
 </html>

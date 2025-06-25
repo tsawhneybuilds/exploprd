@@ -15,6 +15,10 @@ import openai
 from google.cloud import firestore, secretmanager, storage
 from docx import Document
 from collections import defaultdict
+from dotenv import load_dotenv
+
+# Load environment variables from .env file for local development
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -42,6 +46,9 @@ except Exception as e:
     db = None
     secret_client = None
     storage_client = None
+
+# Initialize OpenAI
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Rate limiting
 class RateLimiter:
@@ -125,6 +132,12 @@ async def rate_limit_middleware(request: Request, call_next):
     response = await call_next(request)
     return response
 
+# This is the original, simple way to create the client.
+async def create_openai_client():
+    """Creates an OpenAI client."""
+    api_key = await get_openai_key()
+    return openai.AsyncOpenAI(api_key=api_key)
+
 # Streaming function
 async def stream_openai_response(messages: List[Dict[str, str]]) -> AsyncGenerator[str, None]:
     """Stream OpenAI response chunks with comprehensive logging"""
@@ -132,8 +145,7 @@ async def stream_openai_response(messages: List[Dict[str, str]]) -> AsyncGenerat
     logger.info(f"Starting stream {request_id}")
     
     try:
-        api_key = await get_openai_key()
-        client = openai.AsyncOpenAI(api_key=api_key)
+        client = await create_openai_client()
         
         start_time = time.time()
         chunk_count = 0
@@ -179,6 +191,9 @@ async def stream_openai_response(messages: List[Dict[str, str]]) -> AsyncGenerat
         
         yield "data: [DONE]\n\n"
         
+        # Close client properly
+        await client.close()
+        
     except Exception as e:
         logger.error(f"Stream {request_id} failed: {str(e)}")
         yield f"data: {json.dumps({
@@ -223,8 +238,7 @@ async def chat_stream(request: ChatRequest):
 async def chat_fallback(request: ChatRequest):
     """Fallback non-streaming endpoint for compatibility"""
     try:
-        api_key = await get_openai_key()
-        client = openai.AsyncOpenAI(api_key=api_key)
+        client = await create_openai_client()
         
         # Prepare messages
         messages = []
@@ -246,7 +260,7 @@ async def chat_fallback(request: ChatRequest):
             temperature=0.7
         )
         
-        return ChatResponse(
+        result = ChatResponse(
             response=response.choices[0].message.content,
             tokenUsage={
                 "promptTokens": response.usage.prompt_tokens,
@@ -254,6 +268,10 @@ async def chat_fallback(request: ChatRequest):
                 "totalTokens": response.usage.total_tokens
             }
         )
+        
+        # Close client properly
+        await client.close()
+        return result
     except Exception as e:
         logger.error(f"Chat fallback error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
