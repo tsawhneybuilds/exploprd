@@ -94,94 +94,103 @@
 
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
-          <main class="flex-grow container mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8 items-start">
-          <!-- PRD Assistant Sidebar -->
-        <div class="lg:w-1/3 bg-white p-6 rounded-lg shadow-md flex flex-col" style="height: fit-content;">
-            <div class="flex flex-col space-y-4">
-                <h2 class="text-xl font-bold">Free PRD AI</h2>
-                <p class="text-gray-600">Unlimited Free Chat with AI to build your Product Requirements Document. Conversation is saved locally in your browser.</p>
+<body class="min-h-screen flex flex-col overflow-hidden">
+                    <main class="flex-1 container mx-auto p-4 md:p-8 pb-4 flex flex-col lg:flex-row gap-8 lg:items-stretch overflow-hidden">
+        <!-- PRD Assistant Sidebar -->
+        <div id="leftPanel" class="lg:w-1/3 bg-white p-6 rounded-lg shadow-md flex flex-col overflow-hidden">
+            <div class="flex flex-col space-y-4 overflow-y-auto flex-1">
+                <!-- Top content -->
+                <div class="flex flex-col space-y-4 flex-shrink-0">
+                <h2 class="text-lg font-bold">Free PRD AI</h2>
+                <p class="text-sm text-gray-600">Unlimited Free Chat with AI to build your Product Requirements Document. Conversation is saved locally in your browser.</p>
                 
-                <div id="status" class="text-sm text-gray-600"></div>
-                
-                <div class="bg-blue-50 p-4 rounded-lg">
-                    <h4 class="font-semibold text-blue-800">Example Prompts:</h4>
-                    <ul class="text-sm text-blue-700 mt-2 space-y-1">
+                    <div id="status" class="text-sm text-gray-600"></div>
+                    
+                    <div class="bg-blue-50 p-3 rounded-lg">
+                    <h4 class="font-semibold text-blue-800 text-sm">Example Prompts:</h4>
+                    <ul class="text-sm text-blue-700 mt-1.5 space-y-1">
                         <li>"Help me structure a PRD for a mobile app"</li>
                         <li>"What user stories should I include?"</li>
                         <li>"Define technical requirements for my product"</li>
                     </ul>
                 </div>
 
-                <button id="clearChatBtn" class="px-4 py-2 bg-gray-500 text-white font-semibold rounded-full shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75">
+                    <!-- Action buttons -->
+                    <div class="flex flex-col space-y-3">
+                <button id="clearChatBtn" class="px-4 py-2 bg-gray-500 text-white font-medium rounded-full shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75">
                     Clear Conversation
                 </button>
                 
-                <button id="exportPrdBtn" class="px-4 py-2 bg-green-500 text-white font-semibold rounded-full shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 disabled:opacity-50">
+                        <button id="exportPrdBtn" class="px-4 py-2 bg-green-500 text-white font-medium rounded-full shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 disabled:opacity-50">
                     Export Generated PRD
                     <span id="exportSpinner" class="spinner hidden"></span>
                 </button>
+                    </div>
+                </div>
 
-                <!-- Progress Bar - Positioned absolutely to avoid layout shifts -->
-                <div id="progressBarBlock" class="absolute left-6 right-6 bottom-24 hidden z-20">
-                    <div class="bg-white rounded-lg shadow-lg p-4 flex flex-col items-center border border-gray-200">
-                        <div id="progressStage" class="mb-2 text-base font-semibold text-explo-blue">Exporting PRD...</div>
-                        <div class="w-full bg-gray-200 rounded-full h-4 mb-2 progress-bar-container">
-                            <div id="progressBar" class="bg-explo-blue h-4 rounded-full transition-all duration-500 relative" style="width: 0%">
+                <!-- Progress Bar - Now relative positioned to stay in container -->
+                <div id="progressBarBlock" class="relative hidden mt-3 flex-shrink-0">
+                    <div class="bg-white rounded-lg shadow-lg p-3 flex flex-col items-center border border-gray-200">
+                        <div id="progressStage" class="mb-2 text-sm font-medium text-explo-blue">Exporting PRD...</div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 mb-2 progress-bar-container">
+                            <div id="progressBar" class="bg-explo-blue h-3 rounded-full transition-all duration-500 relative" style="width: 0%">
                                 <div class="progress-bar-moving-lines"></div>
                             </div>
                         </div>
-                        <div id="progressPercent" class="text-sm text-gray-700">0%</div>
+                        <div id="progressPercent" class="text-xs text-gray-700">0%</div>
+                    </div>
                     </div>
                 </div>
             </div>
-        </div>
-
+            
         <!-- Chat Area -->
         <div id="chatContainer" class="lg:w-2/3 bg-white rounded-lg shadow-md flex flex-col">
             <!-- Intro State -->
-            <div id="introState" class="flex flex-col items-center justify-center p-6" style="min-height: 500px;">
-                <div class="text-center max-w-2xl">
-                    <h1 class="text-4xl font-bold text-gray-800 mb-6">Hi, I'm your PRD Assistant</h1>
-                    <p class="text-gray-600 text-xl mb-8">I'll help you build a comprehensive Product Requirements Document. Tell me about your product idea and let's get started!</p>
+            <div id="introState" class="flex flex-col p-6 h-full" style="justify-content: center; transform: translateY(-10%);">
+                <!-- Centered content container -->
+                <div class="text-center max-w-4xl mx-auto">
+                    <!-- Title and description positioned above center -->
+                    <div class="mb-8">
+                        <h1 class="text-4xl font-bold text-gray-800 mb-6">Hi, I'm your PRD Assistant</h1>
+                        <p class="text-gray-600 text-xl">I'll help you build a comprehensive Product Requirements Document. Tell me about your product idea and let's get started!</p>
+            </div>
                     
-                    <div class="flex items-center space-x-3 max-w-3xl mx-auto">
+                    <!-- Input positioned slightly below center -->
+                    <div class="flex items-center space-x-3 w-full max-w-4xl mx-auto">
                         <textarea id="chatInput" placeholder="Start typing to continue" class="flex-grow p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-explo-blue auto-resize min-h-[56px] max-h-32 text-base"></textarea>
                         <button id="sendChatBtn" class="px-6 py-4 bg-explo-blue text-white font-semibold rounded-xl shadow-md hover:bg-explo-darkblue focus:outline-none focus:ring-2 focus:ring-explo-blue focus:ring-opacity-75">
-                            Send
-                            <span id="chatSpinner" class="spinner hidden"></span>
-                        </button>
-                    </div>
-                    <div id="chatStatus" class="text-sm text-gray-600 mt-3"></div>
-                </div>
+                    Send
+                    <span id="chatSpinner" class="spinner hidden"></span>
+                </button>
             </div>
+                    <div id="chatStatus" class="text-sm text-gray-600 mt-3"></div>
+            </div>
+        </div>
 
             <!-- Chat State (hidden initially) -->
-            <div id="chatState" class="bg-white p-6 rounded-lg shadow-md flex-col w-full hidden">
-                <div id="chatWindow" class="flex-grow overflow-y-auto border border-gray-200 rounded-lg p-4 mb-4 space-y-4 bg-gray-50 min-h-[500px]">
-                    <!-- Messages will be added here dynamically -->
-                </div>
-                <div class="flex items-end space-x-3">
+            <div id="chatState" class="p-6 flex-col w-full hidden h-full">
+                <div id="chatWindow" class="flex-1 overflow-y-auto border border-gray-200 rounded-lg p-4 space-y-4 bg-gray-50 mb-4">
+                <!-- Messages will be added here dynamically -->
+            </div>
+                <div class="flex-shrink-0 flex items-end space-x-3">
                     <textarea id="chatInputChat" placeholder="Continue your conversation..." class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-explo-blue auto-resize min-h-[48px] max-h-32"></textarea>
                     <button id="sendChatBtnChat" class="px-5 py-3 bg-explo-blue text-white font-semibold rounded-full shadow-md hover:bg-explo-darkblue focus:outline-none focus:ring-2 focus:ring-explo-blue focus:ring-opacity-75">
                         Send
                         <span id="chatSpinnerChat" class="spinner hidden"></span>
-                    </button>
-                </div>
+                </button>
+            </div>
                 <div id="chatStatusChat" class="text-sm text-gray-600 mt-2"></div>
             </div>
         </div>
     </main>
-    <footer class="bg-explo-darkblue text-white p-4 text-center mt-8">
-        <p>© 2025 Explo. All rights reserved.</p>
-    </footer>
+
 
     <script>
         // Simplified conversation management using localStorage
         let conversation = [
             {
                 role: 'system', 
-                content: 'You are an expert Product Manager AI assistant designed to help users build Product Requirements Documents (PRDs). Your primary goal is to help users think through their product ideas and guide them through creating comprehensive PRDs. Guidelines: Ask clarifying questions to help users define their product vision. Guide them through key PRD sections: Goals, User Stories, Features, Technical Requirements, etc. Provide structured, actionable advice. Help them think about scope, timeline, and priorities. Maintain a professional, clear, and action-oriented tone.'
+                content: 'You are an expert Product Manager AI assistant designed to help users build Product Requirements Documents (PRDs). Your primary goal is to help users think through their product ideas and guide them through creating comprehensive PRDs. Guidelines: Ask clarifying questions to help users define their product vision. Guide them through key PRD sections: Goals, User Stories, Features, Technical Requirements, etc. Provide structured, actionable advice. Help them think about scope, timeline, and priorities. Maintain a professional, clear, and action-oriented tone. Make sure to end each answer with a question to continue the conversation.'
             }
         ];
         
@@ -256,7 +265,7 @@
                         }
                         
                         conversation = uniqueConversation;
-                        showStatus(status, 'Conversation loaded from browser storage', 'success');
+                    showStatus(status, 'Conversation loaded from browser storage', 'success');
                     } else {
                         throw new Error('Invalid conversation format');
                     }
@@ -266,12 +275,12 @@
                     // Reset to default conversation
                     conversation = [{
                         role: 'system',
-                        content: 'You are a Product Requirements Document (PRD) AI assistant. Help users create comprehensive PRDs by asking clarifying questions and providing structured guidance on product features, user stories, technical requirements, and success metrics.'
+                        content: 'You are a Product Requirements Document (PRD) AI assistant. Help users create comprehensive PRDs by asking clarifying questions and providing structured guidance on product features, user stories, technical requirements, and success metrics. Make sure to end each answer with a question to continue the conversation.'
                     }];
                     // Clear corrupted data
                     localStorage.removeItem('prd_conversation');
                 }
-            } else {
+                  } else {
                 // No saved conversation - start fresh
                 conversation = [{
                     role: 'system',
@@ -485,13 +494,13 @@
             clearActiveInput();
             
             addTokens(estimateTokens(messageText));
-
+            
             // Create streaming AI message container
             const streamingContent = displayStreamingMessage(false);
             let fullResponse = '';
 
             try {
-                const response = await fetch('http://localhost:8080/chat/stream', {
+                const response = await fetch('https://chat-prd-streaming-i3b7lh2sma-uc.a.run.app/chat/stream', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -570,6 +579,9 @@
                     }, 2000);
                 }
 
+                // Analytics tracking AFTER all core functionality (non-blocking)
+                setTimeout(() => Analytics.trackChatMessage(false, fullResponse.length), 0);
+
             } catch (error) {
                 console.error('Streaming error:', error);
                 
@@ -592,7 +604,7 @@
             showStatus(getActiveStatusElement(), 'Using fallback mode...', 'info');
             
             try {
-                const response = await fetch('http://localhost:8080/chat', {
+                const response = await fetch('https://chat-prd-streaming-i3b7lh2sma-uc.a.run.app/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ conversation })
@@ -631,17 +643,37 @@
         async function sendMessage(messageText) {
             if (!messageText.trim()) return;
 
+            // Execute core functionality FIRST, analytics AFTER
+            const isFirstMessage = conversation.length <= 1; // Calculate this early
+            
+            let result;
             if (streamingSupported) {
                 try {
-                    return await sendStreamingMessage(messageText);
-                } catch (error) {
+                    result = await sendStreamingMessage(messageText);
+          } catch (error) {
                     console.warn('Streaming failed, using fallback:', error);
-                    return await sendFallbackMessage(messageText);
+                    // Queue error tracking for later (non-blocking)
+                    setTimeout(() => Analytics.trackError('streaming_failed', error.message), 0);
+                    result = await sendFallbackMessage(messageText);
                 }
             } else {
                 console.log('Using non-streaming mode for compatibility');
-                return await sendFallbackMessage(messageText);
+                result = await sendFallbackMessage(messageText);
             }
+
+            // Analytics tracking AFTER core functionality completes (non-blocking)
+            setTimeout(() => {
+                try {
+                    if (isFirstMessage) {
+                        Analytics.trackChatStart();
+                }
+                Analytics.trackChatMessage(true, messageText.length);
+            } catch (error) {
+                // Silent failure to avoid any impact
+            }
+        }, 0);
+            
+            return result;
         }
 
         // Silent token optimization function (background, no user notification)
@@ -652,7 +684,7 @@
             try {
                 console.log('Silent optimization: Analyzing conversation and extracting PRD information...');
                 
-                const response = await fetch('http://localhost:8080/optimize', {
+                const response = await fetch('https://chat-prd-streaming-i3b7lh2sma-uc.a.run.app/optimize', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -771,7 +803,7 @@
             showProgressBar();
 
             try {
-                const response = await fetch('http://localhost:8080/export', {
+                const response = await fetch('https://chat-prd-streaming-i3b7lh2sma-uc.a.run.app/export', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ conversation })
@@ -779,20 +811,60 @@
   
               const result = await response.json();
                 
-              if (response.ok && result.downloadURL) {
+              if (response.ok) {
                     showStatus(status, 'PRD ready for download!', 'success');
                     completeProgressBar();
-                    // Trigger download
-                  const a = document.createElement('a');
-                  a.href = result.downloadURL;
-                  a.download = `Explo_PRD_${new Date().toISOString().slice(0, 10)}.docx`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                    // Show fallback download link after 2 seconds
-                    setTimeout(() => {
-                        showStatus(status, `PRD generated! <a href="${result.downloadURL}" download="${`Explo_PRD_${new Date().toISOString().slice(0, 10)}.docx`}" class="text-blue-600 hover:underline font-medium">Click here if download didn't start</a>`, 'success');
-                    }, 2000);
+                    
+                    let downloadTriggered = false;
+                    
+                    // Handle different response formats
+                    if (result.downloadURL) {
+                        // Public URL download
+                        const a = document.createElement('a');
+                        a.href = result.downloadURL;
+                        a.download = result.fileName || `Explo_PRD_${new Date().toISOString().slice(0, 10)}.docx`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        downloadTriggered = true;
+                        
+                        // Show fallback download link
+                        setTimeout(() => {
+                            showStatus(status, `PRD generated! <a href="${result.downloadURL}" download="${result.fileName || `Explo_PRD_${new Date().toISOString().slice(0, 10)}.docx`}" class="text-blue-600 hover:underline font-medium">Click here if download didn't start</a>`, 'success');
+                        }, 2000);
+                        
+                    } else if (result.downloadData) {
+                        // Base64 data download
+                        const blob = new Blob([new Uint8Array(atob(result.downloadData).split('').map(c => c.charCodeAt(0)))], {
+                            type: result.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = result.fileName || `Explo_PRD_${new Date().toISOString().slice(0, 10)}.docx`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                        downloadTriggered = true;
+                        
+                        showStatus(status, 'PRD downloaded successfully!', 'success');
+                        
+                    } else if (result.error) {
+                        // Handle storage upload failure but file was generated
+                        let errorMessage = 'PRD was generated but download failed. Please try again.';
+                        if (result.error.includes('Storage upload failed')) {
+                            errorMessage = 'File was generated but storage failed. Please try the export again.';
+                        }
+                        errorProgressBar(errorMessage);
+                        throw new Error(result.error);
+                    }
+                    
+                    // Analytics tracking AFTER download is triggered (non-blocking)
+                    if (downloadTriggered) {
+                        setTimeout(() => Analytics.trackPRDGenerated(), 0);
+                    }
+                    
               } else {
                     // Enhanced error handling with specific messages
                     let errorMessage = 'Export failed. Please try again.';
@@ -815,20 +887,11 @@
 
           } catch (error) {
                 console.error('Export error:', error);
+                
                 let userErrorMessage = 'Export failed. Please try again.';
                 
-                // Provide specific error messages based on error type
-                if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    userErrorMessage = 'Network error: Unable to connect to the server. Please check your internet connection.';
-                } else if (error.message.includes('timeout')) {
-                    userErrorMessage = 'Request timed out. The export is taking longer than expected. Please try again.';
-                } else if (error.message.includes('API')) {
-                    userErrorMessage = 'Service temporarily unavailable. Please try again in a few minutes.';
-                } else if (error.message.includes('storage') || error.message.includes('file')) {
-                    userErrorMessage = 'File processing error. Please try again with a shorter conversation.';
-                } else {
-                    userErrorMessage = `Export error: ${error.message}`;
-                }
+                // Queue analytics tracking for later (non-blocking)
+                setTimeout(() => Analytics.trackError('export_failed', error.message), 0);
                 
                 errorProgressBar(userErrorMessage);
                 showStatus(status, userErrorMessage, 'error');
@@ -846,11 +909,21 @@
                 conversation = [conversation[0]]; // Keep only system message
                 saveConversation();
                 
+                // Clear the chat window completely
+                const chatWindow = document.getElementById('chatWindow');
+                chatWindow.innerHTML = '';
+                
                 // Reset to intro state
                 const introState = document.getElementById('introState');
                 const chatState = document.getElementById('chatState');
+                
+                // Show intro state
                 introState.classList.remove('hidden');
+                introState.style.display = 'flex';
+                
+                // Hide chat state
                 chatState.classList.add('hidden');
+                chatState.style.display = 'none';
                 
                 // Clear both input fields
                 chatInput.value = '';
@@ -906,11 +979,13 @@
             if (conversation.length <= 1) {
                 // Show intro state - no conversation exists
                 introState.classList.remove('hidden');
+                introState.style.display = 'flex';
                 chatState.classList.add('hidden');
                 chatState.style.display = 'none';
             } else {
                 // Show chat state if conversation exists
                 introState.classList.add('hidden');
+                introState.style.display = 'none';
                 chatState.classList.remove('hidden');
                 chatState.style.display = 'flex';
                 
@@ -982,16 +1057,46 @@
             const introState = document.getElementById('introState');
             const chatState = document.getElementById('chatState');
             
+            // Completely hide intro state
             introState.classList.add('hidden');
+            introState.style.display = 'none';
+            
+            // Show chat state
             chatState.classList.remove('hidden');
             chatState.style.display = 'flex';
+            
+            // Auto-scroll to show the conversation area with better positioning
+            setTimeout(() => {
+                const chatContainer = document.getElementById('chatContainer');
+                if (chatContainer) {
+                    // Scroll to center the chat container instead of putting it at the top
+                    chatContainer.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                }
+            }, 100); // Small delay to ensure the chat state is rendered
         }
 
         // Initialize app
         window.onload = () => {
+            try {
+                Analytics.init(); // Initialize analytics (safe)
+            } catch (error) {
+                console.warn('Analytics initialization failed (non-critical):', error);
+            }
+            
+            initializeDynamicHeight(); // Set up dynamic heights first
             loadConversation();
             initializeChatInterface();
             autoResizeTextarea(); // Initialize textarea height
+            
+            // Track page view after everything is loaded
+            try {
+                Analytics.trackPageView();
+            } catch (error) {
+                console.warn('Analytics page view tracking failed (non-critical):', error);
+            }
         };
 
         // Cursor functions removed - no cursor needed for streaming
@@ -1001,6 +1106,194 @@
         function removeBlinkingCursor(targetElem) {
             // No cursor needed
         }
-    </script>
+
+        // Dynamic height calculation system
+        function calculateOptimalChatHeight() {
+            const viewportHeight = window.innerHeight;
+            const isInIframe = window !== window.parent;
+            
+            // If in iframe, use more of the available space
+            const headerHeight = isInIframe ? 20 : 80; // Less header space in iframe
+            const footerHeight = isInIframe ? 20 : 40; // Less footer space in iframe
+            
+            // Responsive height configuration
+            const width = window.innerWidth;
+            let config;
+            
+            if (width < 768) {
+                // Mobile
+                config = { min: 350, max: 500, percentage: isInIframe ? 0.95 : 0.8 };
+            } else if (width < 1024) {
+                // Tablet
+                config = { min: 400, max: 800, percentage: isInIframe ? 0.95 : 0.9 };
+            } else {
+                // Desktop
+                config = { min: 500, max: 1000, percentage: isInIframe ? 0.95 : 0.9 };
+            }
+            
+            const availableHeight = viewportHeight - headerHeight - footerHeight;
+            const calculatedHeight = availableHeight * config.percentage;
+            
+            // Clamp between min and max
+            const optimalHeight = Math.max(config.min, Math.min(config.max, calculatedHeight));
+            
+            return Math.floor(optimalHeight);
+        }
+        
+        function setDynamicHeight() {
+            const optimalHeight = calculateOptimalChatHeight();
+            const isInIframe = window !== window.parent;
+            
+            // Set CSS custom property for dynamic height
+            document.documentElement.style.setProperty('--dynamic-chat-height', `${optimalHeight}px`);
+            
+            // Apply to both panels to ensure same height
+            const leftPanel = document.getElementById('leftPanel');
+            const chatContainer = document.getElementById('chatContainer');
+            
+            if (leftPanel) {
+                leftPanel.style.height = `${optimalHeight}px`;
+                leftPanel.style.minHeight = `${optimalHeight}px`;
+                leftPanel.style.maxHeight = `${optimalHeight}px`;
+            }
+            
+            if (chatContainer) {
+                chatContainer.style.height = `${optimalHeight}px`;
+                chatContainer.style.minHeight = `${optimalHeight}px`;
+                chatContainer.style.maxHeight = `${optimalHeight}px`;
+            }
+            
+            console.log(`Dynamic height set to: ${optimalHeight}px (viewport: ${window.innerHeight}px, iframe: ${isInIframe}, width: ${window.innerWidth}px)`);
+        }
+        
+        // Initialize dynamic height on load and resize
+        function initializeDynamicHeight() {
+            setDynamicHeight();
+            
+            // Add resize listener with debouncing
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(setDynamicHeight, 150);
+            });
+        }
+
+        // Optimized Analytics System - Fully asynchronous and non-blocking
+        const Analytics = {
+            enabled: false,
+            isInIframe: false,
+            parentOrigin: 'https://explo.co',
+            queue: [], // Queue analytics events to prevent blocking
+            testMode: false, // Set to true for direct GA4 testing
+            
+            init() {
+                try {
+                    this.isInIframe = window !== window.parent;
+                    this.enabled = this.isInIframe; // Only enable in iframe context
+                    
+                    // For testing: enable even when not in iframe
+                    if (!this.enabled && this.testMode) {
+                        this.enabled = true;
+                        console.log('Analytics: Test mode enabled');
+                    }
+                    
+                    if (this.enabled) {
+                        console.log('Analytics: Initialized for iframe context');
+                        // Process any queued events
+                        this.processQueue();
+                    }
+                } catch (error) {
+                    console.warn('Analytics: Initialization failed (non-critical):', error);
+                    this.enabled = false;
+                }
+            },
+            
+            // Asynchronous, non-blocking track method
+            track(eventName, parameters = {}) {
+                if (!this.enabled) return;
+                
+                // Use setTimeout to make this completely asynchronous
+                setTimeout(() => {
+                    try {
+                        const eventData = {
+                            type: 'analytics_event',
+                            event: eventName,
+                            parameters: {
+                                ...parameters,
+                                iframe_source: 'prd-ai',
+                                timestamp: new Date().toISOString(),
+                                page: '/prd-ai'
+                            }
+                        };
+                        
+                        if (this.isInIframe) {
+                            // Send to parent window for production
+                            window.parent.postMessage(eventData, this.parentOrigin);
+                        } else if (this.testMode && typeof gtag !== 'undefined') {
+                            // Direct GA4 for testing
+                            gtag('event', eventName, eventData.parameters);
+                            console.log('Direct GA4 event:', eventName, eventData.parameters);
+                        }
+                        
+                        // Minimal logging to reduce overhead
+                        if (console.debug) {
+                            console.debug('Analytics:', eventName);
+                        }
+                    } catch (error) {
+                        // Silent failure - don't even log to avoid performance impact
+                    }
+                }, 0); // Execute on next tick to avoid blocking
+            },
+            
+            processQueue() {
+                while (this.queue.length > 0) {
+                    const { eventName, parameters } = this.queue.shift();
+                    this.track(eventName, parameters);
+                }
+            },
+            
+            // Queue events if analytics not ready yet
+            queueEvent(eventName, parameters) {
+                this.queue.push({ eventName, parameters });
+            },
+            
+            // Optimized tracking methods - all async
+            trackPageView() {
+                this.track('page_view', {
+                    tool: 'prd_ai',
+                    viewport_height: window.innerHeight,
+                    viewport_width: window.innerWidth
+                });
+            },
+            
+            trackChatStart() {
+                this.track('chat_started', {
+                    tool: 'prd_ai'
+                });
+            },
+            
+            trackChatMessage(isUser, messageLength) {
+                this.track('chat_message', {
+                    tool: 'prd_ai',
+                    message_type: isUser ? 'user' : 'ai',
+                    length: messageLength > 1000 ? '1000+' : messageLength < 100 ? '<100' : '100-1000' // Bucketize to reduce data
+                });
+            },
+            
+            trackPRDGenerated() {
+                this.track('prd_generated', {
+                    tool: 'prd_ai'
+                });
+            },
+            
+            trackError(errorType, errorMessage) {
+                this.track('error_occurred', {
+                    tool: 'prd_ai',
+                    error_type: errorType
+                    // Remove error_message to reduce payload size
+                });
+            }
+        };
+  </script>
 </body>
 </html>

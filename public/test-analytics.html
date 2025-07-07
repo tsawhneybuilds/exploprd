@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Test - Simulating explo.co/prd-ai</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        #analytics-log {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #005a8b;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Analytics Test Page</h1>
+    <p>This page simulates <code>explo.co/prd-ai</code> to test analytics communication from the iframe.</p>
+    
+    <div class="status success">
+        ✅ Analytics listener is active and ready to receive events
+    </div>
+    
+    <div class="controls">
+        <button onclick="clearLog()">Clear Log</button>
+        <button onclick="testGoogleAnalytics()">Test GA4 Integration</button>
+        <button onclick="downloadLog()">Download Log</button>
+    </div>
+    
+    <h3>📋 Analytics Events Log:</h3>
+    <div id="analytics-log">
+        <div style="color: #888;">Waiting for analytics events from iframe...</div>
+    </div>
+    
+    <h3>🖼️ PRD AI Iframe:</h3>
+    <iframe 
+        src="https://explochatprd.web.app" 
+        title="PRD AI Tool"
+        id="prd-iframe">
+    </iframe>
+
+    <script>
+        let eventCount = 0;
+        const logElement = document.getElementById('analytics-log');
+        
+        // Simulate Google Analytics 4
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID_TEST');
+        
+        function logMessage(message, type = 'info') {
+            eventCount++;
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : '#00ff00';
+            
+            const logEntry = document.createElement('div');
+            logEntry.style.color = color;
+            logEntry.innerHTML = `[${timestamp}] #${eventCount}: ${message}`;
+            
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // Listen for analytics events from iframe
+        window.addEventListener('message', function(event) {
+            // Security check
+            if (event.origin !== 'https://explochatprd.web.app') {
+                logMessage(`❌ Rejected message from unauthorized origin: ${event.origin}`, 'error');
+                return;
+            }
+            
+            if (event.data.type === 'analytics_event') {
+                const { event: eventName, parameters } = event.data;
+                
+                logMessage(`📊 Analytics Event: ${eventName}`, 'success');
+                logMessage(`   Parameters: ${JSON.stringify(parameters, null, 2)}`);
+                
+                // Simulate sending to Google Analytics
+                try {
+                    gtag('event', eventName, parameters);
+                    logMessage(`   ✅ Sent to Google Analytics`, 'success');
+                } catch (error) {
+                    logMessage(`   ❌ GA4 Error: ${error.message}`, 'error');
+                }
+                
+                logMessage(''); // Add spacing
+            } else {
+                logMessage(`📨 Other message: ${JSON.stringify(event.data)}`);
+            }
+        });
+        
+        function clearLog() {
+            logElement.innerHTML = '<div style="color: #888;">Log cleared. Waiting for new events...</div>';
+            eventCount = 0;
+        }
+        
+        function testGoogleAnalytics() {
+            logMessage('🧪 Testing GA4 integration...', 'info');
+            gtag('event', 'test_event', {
+                custom_parameter: 'test_value',
+                event_category: 'test'
+            });
+            logMessage('✅ Test event sent to GA4', 'success');
+        }
+        
+        function downloadLog() {
+            const logText = logElement.innerText;
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `analytics-log-${new Date().toISOString().slice(0, 19)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Initial setup
+        logMessage('🚀 Analytics test page loaded', 'success');
+        logMessage('📡 Listening for events from iframe...', 'info');
+    </script>
+</body>
+</html> 
