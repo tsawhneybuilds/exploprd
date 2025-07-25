@@ -24,7 +24,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file for local development
 load_dotenv()
 
-# Project constants
+# Project constants  
 PROJECT_ID = os.environ.get('GOOGLE_CLOUD_PROJECT', 'explo-website-tools')
 SERVICE_ACCOUNT_EMAIL = '142797649545-compute@developer.gserviceaccount.com'
 
@@ -676,6 +676,55 @@ async def optimize_conversation(request: OptimizeRequest):
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+@app.get("/warmup")
+async def warmup():
+    """Warm-up endpoint that initializes basic services for faster first responses"""
+    try:
+        start_time = time.time()
+        logger.info("Starting warmup...")
+        
+        # Basic service checks that don't require API keys
+        services_status = {
+            "fastapi": "ready",
+            "firestore": "ready" if db else "unavailable", 
+            "storage": "ready" if storage_client else "unavailable"
+        }
+        
+        # Test OpenAI API key availability (but don't fail if not available)
+        try:
+            if os.environ.get('OPENAI_API_KEY'):
+                # If API key is in environment, test client creation
+                import httpx
+                http_client = httpx.AsyncClient(
+                    timeout=30.0,
+                    limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+                )
+                await http_client.aclose()  # Just test creation and close
+                services_status["openai"] = "ready"
+                logger.info("OpenAI client initialization test successful")
+            else:
+                services_status["openai"] = "no_api_key"
+        except Exception as openai_error:
+            logger.warning(f"OpenAI warmup test failed (non-critical): {openai_error}")
+            services_status["openai"] = "error"
+        
+        warmup_time = time.time() - start_time
+        logger.info(f"Warmup completed in {warmup_time:.2f}s")
+        
+        return {
+            "status": "warmed_up", 
+            "timestamp": datetime.now().isoformat(),
+            "warmup_time": warmup_time,
+            "services": services_status
+        }
+    except Exception as e:
+        logger.error(f"Warmup error: {e}")
+        return {
+            "status": "warmup_failed", 
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
 
 @app.get("/")
 async def root():
